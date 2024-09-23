@@ -1,6 +1,7 @@
 
 SERTO
 -------------------------------------------------------------------------------------------
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/USEPA/serto/blob/master/License.md) 
 [![Build Status](https://github.com/USEPA/SERTP/actions/workflows/build_test.yml/badge.svg?branch=master)](https://github.com/USEPA/SERTO/actions/workflows/build_test.yml)
 [![Documentation](https://github.com/USEPA/SERTP/actions/workflows/documentation.yml/badge.svg?branch=master)](https://github.com/USEPA/SERTO/actions/workflows/documentation.yml)
 [![License](https://img.shields.io/pypi/l/serto.svg)](LICENSE)
