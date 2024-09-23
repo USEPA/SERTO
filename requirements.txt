@@ -1,0 +1,18 @@
+scikit-build~=0.16.7
+mpi4py~=3.1.6
+numpy~=1.22.4
+pandas~=2.2.2
+julian~=0.14
+pyyaml~=6.0.1
+plotly~=5.18.0
+chama~=0.2.0
+pyswmm~=1.2.0
+windrose~= 1.8.0
+matplotlib~=3.3.4
+getmac~=0.9.4
+shapely~=1.8.5
+fiona~=1.8.22
+geopandas~=0.9.0
+
+# Testing
+pytest
