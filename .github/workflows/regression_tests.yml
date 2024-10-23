@@ -1,3 +1,4 @@
+name: Build and Regression Test
 on:
   push:
     branches:
