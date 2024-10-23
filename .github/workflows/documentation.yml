@@ -7,7 +7,7 @@ on:
       - dev
 jobs:
   build:
-    name: Build Test Deploy
+    name: Build and Deploy Documentation
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -4,10 +4,9 @@ on:
   pull_request:
     branches:
       - main
-      - dev
 jobs:
   build:
-    name: Build Test Deploy
+    name: Build and Test
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
