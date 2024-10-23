@@ -1,3 +1,6 @@
+"""
+The serto.moea module provides the functionality for multi-objective evolutionary algorithms.
+"""
 # python imports
 import argparse
 
@@ -5,6 +8,7 @@ import argparse
 # third party imports
 
 # local imports
+
 
 def get_description():
     return 'Run the CHAMA optimization'

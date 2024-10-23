@@ -1,3 +1,7 @@
+"""
+The serto.analysis module provides the functionality for various analysis tasks.
+"""
+
 # python imports
 import argparse
 import pandas as pd

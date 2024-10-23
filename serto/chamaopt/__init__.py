@@ -1,6 +1,9 @@
+"""
+The serto.chamaopt module provides the functionality for CHAMA optimization.
+"""
+
 # python imports
 import argparse
-
 
 # third party imports
 
