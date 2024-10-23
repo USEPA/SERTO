@@ -92,12 +92,8 @@ classifiers = [
 [tool.setuptools]
 include-package-data = true
 packages = ['serto']
-
-[tool.setuptools.package-data]
-pyproject = ["pyproject.toml"]
+package-data = {"" = ["pyproject.toml"]}
 
 [project.scripts]
 swmmoptimizer = "serto.cli:main"
 
-[options.entry_points]
-console_scripts = {swmmoptimizer= "serto.cli:main"}

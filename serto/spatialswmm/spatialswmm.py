@@ -18,12 +18,14 @@ class SpatialSWMM:
     """
     This class represents a spatial SWMM model
     """
-    SECTIONS = ['[TITLE]', '[OPTIONS]', '[EVAPORATION]', '[RAINGAGES]', '[SUBCATCHMENTS]', '[SUBAREAS]',
+    SECTIONS = [
+        '[TITLE]', '[OPTIONS]', '[EVAPORATION]', '[RAINGAGES]', '[SUBCATCHMENTS]', '[SUBAREAS]',
                 '[INFILTRATION]', '[JUNCTIONS]', '[OUTFALLS]', '[STORAGE]', '[CONDUITS]', '[XSECTIONS]',
                 '[LOSSES]', '[POLLUTANTS]', '[LANDUSES]', '[COVERAGES]', '[LOADINGS]', '[BUILDUP]',
                 '[WASHOFF]', '[TREATMENT]', '[INFLOWS]', '[DWF]', '[HYDROGRAPHS]', '[RDII]', '[UNITHYDROGRAPHS]',
                 '[AQUIFERS]', '[GROUNDWATER]', '[SOURCES]', '[SOURCES]', '[MAP]', '[COORDINATES]', '[VERTICES]',
-                '[POLYGONS]', '[SYMBOLS]', '[LABELS]', '[BACKDROP]', '[TAGS]', '[MAP]', '[COORDINATES]', '[VERTICES]']
+                '[POLYGONS]', '[SYMBOLS]', '[LABELS]', '[BACKDROP]', '[TAGS]', '[MAP]', '[COORDINATES]', '[VERTICES]'
+    ]
 
     OPTIONS_COLUMNS_PARAMS = {
         "FLOW_UNITS": ["CFS", "GPM", "MGD", "CMS", "LPS", "MLD"],
