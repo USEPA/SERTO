@@ -2,10 +2,12 @@ name: Build Documentation
 on:
   push:
     branches:
+      - dev
   pull_request:
     branches:
       - main
       - dev
+      - docs
 jobs:
   build:
     name: Build and Deploy Documentation
@@ -20,6 +22,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # Install OpenMPI and MPICH for Ubuntu
+      - name: Install OpenMPI
+        run: |
+          sudo apt-get install -y openmpi-bin libopenmpi-dev
 
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v5
