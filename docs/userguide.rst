@@ -60,7 +60,6 @@ designed to simulate and analyze resilience of water distribution networks.
     :hidden:
     :caption: Backmatter
 
-    license
     whatsnew
     developers
     acronyms

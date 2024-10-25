@@ -16,11 +16,9 @@ Copyright
 .. code-block:: none 
 
 
-Revised BSD license
+MIT License
 -------------------------
-.. code-block:: none 
-
-   MIT License
+.. code-block:: none
 
    Copyright (c) 2024 U.S. Environmental Protection Agency
 
