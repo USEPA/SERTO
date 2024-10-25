@@ -1,5 +1,5 @@
-.. figure:: images/serto_logo.png
-   :scale: 50 %
+.. figure:: images/serto_logo.svg
+   :scale: 200 %
    :alt: Logo
    
 ========================================
