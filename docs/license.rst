@@ -1,24 +1,4 @@
-.. raw:: latex
 
-    \clearpage
-
-.. _copyright_license:
-
-Copyright and license
-================================
-SERTO also leverages a variety of third-party software packages, which
-have separate licensing policies. 
-See `LICENSE.md <https://github.com/USEPA/SERTO/blob/main/LICENSE.md>`_ for 
-more details.
-
-Copyright
-------------
-.. code-block:: none 
-
-
-MIT License
--------------------------
-.. code-block:: none
 
    Copyright (c) 2024 U.S. Environmental Protection Agency
 

@@ -10,7 +10,7 @@ The Stormwater Emergency Response Tool & Optimizer (SERTO)
 |LicenseMIT| |Build and Unit Tests| |Build and Regression Tests| |Documentation| |Nightly wheels| |PyPi| |PythonVersion| |Monthly Downloads|  |DOI|
 
 .. |LicenseMIT| image:: https://img.shields.io/badge/License-MIT-blue.svg
-   :target: https://github.com/USEPA/serto/blob/dev/License.md
+   :target: https://github.com/USEPA/SERTO/blob/main/docs/license.rst
 
 .. |Build and Unit Tests| image:: https://github.com/USEPA/SERTO/actions/workflows/build_tests.yml/badge.svg?branch=dev
    :target: https://github.com/USEPA/SERTO/actions/workflows/build_tests.yml
@@ -42,8 +42,6 @@ around the EPA SWMM model for optimizing infrastructure sizing and placement, op
 response applications in stormwater systems. The official SERTO software repository is in the U.S. EPA's
 GitHub repository (https://github.com/USEPA/serto). Releases are also made available via PyPI and conda-forge.
 
-
-
 Citing SERTO
 ===========
 
@@ -56,3 +54,28 @@ The U.S. Environmental Protection Agency through its Office of Research funded t
 It has NOT been subjected to the Agency's review and has NOT been approved for publication yet. Note that approval
 does not signify that the contents necessarily reflect the views of the Agency. Mention of trade names products,
 or services does not convey official EPA approval, endorsement, or recommendation.
+
+.. raw:: latex
+
+    \clearpage
+
+.. _copyright_license:
+
+Copyright and license
+================================
+
+SERTO is released under the MIT license (see `LICENSE <https://github.com/USEPA/SERTO/blob/dev/docs/license.rst>`_ ) for
+more details.
+
+SERTO also leverages a variety of third-party software packages, which
+have separate licensing policies.
+
+
+Copyright
+------------
+.. code-block:: none
+
+
+MIT License
+-------------------------
+.. include:: LICENSE.rst
