@@ -1,4 +1,4 @@
-.. figure:: docs/images/serto_logo.svg
+.. figure:: images/serto_logo.svg
    :scale: 200 %
    :alt: Logo
 
