@@ -38,7 +38,7 @@ The Stormwater Emergency Response Tool & Optimizer (SERTO)
 
 
 The Stormwater Emergency Response Tool & Optimizer (SERTO) is a python package that provides a set of tools
-around the EPA SWMM model for optimizing infrastructure sizing and placement, operations, and for emergency
+around the EPA SWMM model for optimizing sensor placement, infrastructure sizing, operations, and for emergency
 response applications in stormwater systems. The official SERTO software repository is in the U.S. EPA's
 GitHub repository (https://github.com/USEPA/serto). Releases are also made available via PyPI and conda-forge.
 
@@ -64,18 +64,18 @@ or services does not convey official EPA approval, endorsement, or recommendatio
 Copyright and license
 ================================
 
-SERTO is released under the MIT license (see `LICENSE <https://github.com/USEPA/SERTO/blob/dev/docs/license.rst>`_ ) for
-more details.
+SERTO is released under the MIT license (see `LICENSE <https://github.com/USEPA/SERTO/blob/dev/docs/license.rst>`_ for
+more details).
 
-SERTO also leverages a variety of third-party software packages, which
-have separate licensing policies.
-
+SERTO also leverages a variety of third-party software packages, which have separate licensing policies. Please refer to
+the `third-party software <>`_ section of the documentation for more information about the third-party software packages
+used in SERTO.
 
 Copyright
 ------------
 .. code-block:: none
 
 
-MIT License
+License
 -------------------------
-.. include:: LICENSE.rst
+.. include:: license.rst
