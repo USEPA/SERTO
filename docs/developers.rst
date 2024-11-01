@@ -104,6 +104,6 @@ Pull requests must meet the following minimum requirements to be included in SER
 Development team
 -------------------
 SERTO was developed as part of a collaboration between the United States 
-Environmental Protection Agency Office of Research and Development, 
-Sandia National Laboratories, and Purdue University.  
+Environmental Protection Agency Office of Research and Development and 
+Aptim Federal Services, LLC in collaboration with Global Quality Corp. under Contract No. 68HERC19D009, Task Order No. 68HERC22F0455
 See https://github.com/USEPA/SERTO/graphs/contributors for a full list of contributors.

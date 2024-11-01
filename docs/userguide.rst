@@ -5,8 +5,8 @@
 User Guide
 ==========
 
-The Water Network Tool for Resilience (SERTO) is an EPANET compatible Python package 
-designed to simulate and analyze resilience of water distribution networks.
+The Stormwater Emergency Response Tool & Optimizer (SERTO) is an EPA SWMM compatible Python package 
+designed for optimizing infrastructure sizing and placement, operations, and emergency response applications in stormwater systems. 
 
 .. toctree::
    :maxdepth: 1
