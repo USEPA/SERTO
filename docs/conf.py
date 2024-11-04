@@ -14,6 +14,9 @@
 
 import sys
 import os
+sys.path.append('.')
+from links.link import *
+from links import *
 import shlex
 from serto import __version__
 
