@@ -1,5 +1,6 @@
 ensemble:
   name: Bancklick Ensemble
+  swmm_input_file: "swmm_input_file1.inp"
   description: "This is a Bancklick ensemble"
   naming_convention: "Bancklick_[event]_[parameter]_[value]"
   threads_per_simulation: 4
