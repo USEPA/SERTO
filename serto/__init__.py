@@ -7,5 +7,5 @@ __copyright__ = "Copyright (c) 2024"
 __credits__ = ["Caleb Buahin and Anne Mikelonis"]
 __license__ = "MIT"
 __maintainer__ = "Caleb Buahin and Anne Mikelonis"
-__email__ = "calebggh@gmail.com"
+__email__ = "buahin.caleb@epa.gov"
 __status__ = "Development"

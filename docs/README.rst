@@ -61,7 +61,7 @@ or services does not convey official EPA approval, endorsement, or recommendatio
 
 .. _copyright_license:
 
-Copyright and license
+Copyright and License
 ================================
 
 SERTO is released under the MIT license (see `LICENSE <https://github.com/USEPA/SERTO/blob/dev/docs/license.rst>`_ for

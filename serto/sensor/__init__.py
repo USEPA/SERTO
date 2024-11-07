@@ -1,5 +1,5 @@
 """
-The serto.chamaopt module provides the functionality for CHAMA optimization.
+The serto.sensor module provides the functionality for CHAMA optimization.
 """
 
 # python imports
@@ -23,7 +23,7 @@ def configure_subparser(sub_parser: argparse.ArgumentParser):
     """
 
     parser = sub_parser.add_parser(
-        'chama',
+        'sensor_placement_chama.yml',
         help='Run CHAMA optimization functions'
     )
 

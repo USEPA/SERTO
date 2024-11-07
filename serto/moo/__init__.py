@@ -1,5 +1,5 @@
 """
-The serto.moea module provides the functionality for multi-objective evolutionary algorithms.
+The serto.moo module provides the functionality for multi-objective evolutionary algorithms.
 """
 # python imports
 import argparse

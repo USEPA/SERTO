@@ -33,7 +33,7 @@ dynamic = ["version"]
 description = "A Python package for optimizing SWMM models for infastructure design, operational control, and emergency response applications"
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {file = "LICENSE"}
-keywords = ["SWMM", "optimization", "water", "stormwater", "modeling"]
+keywords = ["SWMM", "optimization", "water", "stormwater", "modeling", "hydrology", "hydraulics", "wastewater", "infrastructure", "design", "control", "emergency", "response"]
 requires-python = ">=3.8"
 
 authors = [
@@ -97,7 +97,6 @@ packages = ['serto']
 pyproject = ["pyproject.toml"]
 
 [project.scripts]
-swmmoptimizer = "serto.cli:main"
+serto = "serto.cli:main"
 
-[options.entry_points]
-console_scripts = {swmmoptimizer= "serto.cli:main"}
+# Removed invalid [options.entry_points] section
