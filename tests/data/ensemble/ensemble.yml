@@ -5,9 +5,10 @@ ensemble:
   naming_convention: "Bancklick_[event]_[parameter]_[value]"
   threads_per_simulation: 4
   reporting_time_step: '00:15:00'
+  output_path: "output"
   swmm:
     scenario_matrix:
-        events:
+        precipitation_events:
             - event:
                 name: "Event 1"
                 description: "This is the first event"

@@ -3,40 +3,34 @@ rdd_events:
     output_mesh_resolution:
         x: 120
         y: 120
-    events:
-        - rdd_event:
-            name: "RDD Event 1"
-            description: "This is the first RDD event"
-            date: "2020-01-01 00:00:00"
-            plume:
-                magnitude: 1.0
-                type: Physics # Empirical
-                direction: 10.0 # Between 0 and 360
-                location:
-                    x: 0.0
-                    y: 0.0
-                standard_deviation:
-                    x: 0.0
-                    y: 0.0
-                release_height: 0.0 # Only for Physics plumes
-                lateral_turbulent_intensity: 0.0 # Only for Physics plumes
-                aerodynamic_roughness: 0.0 # Only for Physics plumes
-        - rdd_event:
-            name: "RDD Event 2"
-            description: "This is the second RDD event"
-            date: "2020-01-02 00:00:00"
-            plume:
-                magnitude: 1.0
-                type: Physics # Empirical
-                direction: 10.0 # Between 0 and 360
-                location:
-                    x: 0.0
-                    y: 0.0
-                standard_deviation:
-                    x: 0.0
-                    y: 0.0
-                release_height: 0.0 # Only for Physics plumes
-                lateral_turbulent_intensity: 0.0 # Only for Physics plumes
-                aerodynamic_roughness: 0.0 # Only for Physics plumes
+    start_date: "2020-01-01 00:00:00"
+    contaminant_name: "Cesium"
+    type: Physics # Empirical
+    event_matrix:
+        contaminant_amounts: [1.0, 2.0, 3.0]
+        directions: [0, 25, 50, 360]
+        speeds: [1.0, 2.0, 3.0]
+        lateral_turbulent_intensities: [0.0, 0.0, 0.0]
+        aerodynamic_roughness: [0.0, 0.0, 0.0]
+        standard_deviations:
+            - [10, 10]
+            - [20, 20]
+            - [30, 30]
+        locations:
+            element_types:
+                - subcatchment
+                - junction
+                - outfall
+                - storage
+            specified_locations:
+                - location:
+                    name: "Subcatchment 1"
+                    x: 0
+                    y: 0
+                - location:
+                    name: "Junction 1"
+                    x: 0
+                    y: 0
+            by_mesh: True # Default True
 
 
