@@ -1,4 +1,4 @@
 [submodule "Stormwater-Management-Model"]
 	path = Stormwater-Management-Model
 	url = https://github.com/USEPA/Stormwater-Management-Model.git
-	branch = master
+	branch = bug_fixes
