@@ -9,6 +9,7 @@ import pandas as pd
 # third party imports
 
 # local imports
+from . import swmm
 from .swmm import main as swmm_main, configure_subparsers as configure_swmm_visualization_parser
 # from .analysis import main as analysis_main, configure_subparsers as configure_analysis_parser
 

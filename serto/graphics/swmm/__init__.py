@@ -61,7 +61,7 @@ def configure_subparsers(graphics_subparsers: argparse.ArgumentParser):
         "-o",
         "--output",
         default=None,
-        help="Output file path for the visualization with options ['*.png', '*.pdf', '*.svg', '*.html' for plotly]",
+        help="Output file example configuration file ['*.json', '*.yaml', '*.yml']",
         action='store'
     )
 
@@ -79,34 +79,36 @@ def config_decorator(func: Callable[Any, Any]) -> Callable[Any, Any]:
 
             config_file = kwargs['config']
 
-
-            if config_file.endswith('.json'):
-                import json
-                with open(config_file, 'r') as f:
-                    config = json.load(f)
-            elif config_file.endswith('.yaml') or config_file.endswith('.yml'):
-                import yaml
-                with open(config_file, 'r') as f:
-                    config = yaml.load(f, Loader=yaml.Loader)
+            if config_file is None:
+                pass
             else:
-                raise ValueError(f'Unknown file type for config file: {config_file}')
+                if config_file.endswith('.json'):
+                    import json
+                    with open(config_file, 'r') as f:
+                        config = json.load(f)
+                elif config_file.endswith('.yaml') or config_file.endswith('.yml'):
+                    import yaml
+                    with open(config_file, 'r') as f:
+                        config = yaml.load(f, Loader=yaml.Loader)
+                else:
+                    raise ValueError(f'Unknown file type for config file: {config_file}')
 
-            kwargs.update(config)
-            del kwargs['config']
+                kwargs.update(config)
+                del kwargs['config']
 
-            if 'inp' in kwargs:
-                inp_file = kwargs['inp']
-                if not os.path.isabs(inp_file):
-                    inp_file = os.path.join(os.path.dirname(config_file), inp_file)
-                    kwargs['inp'] = inp_file
-                if not os.path.exists(inp_file):
-                    raise ValueError(f'Input file does not exist: {inp_file}')
+                if 'inp' in kwargs:
+                    inp_file = kwargs['inp']
+                    if not os.path.isabs(inp_file):
+                        inp_file = os.path.join(os.path.dirname(config_file), inp_file)
+                        kwargs['inp'] = inp_file
+                    if not os.path.exists(inp_file):
+                        raise ValueError(f'Input file does not exist: {inp_file}')
 
-            if 'output' in kwargs:
-                output_file = kwargs['output']
-                if not os.path.isabs(output_file):
-                    output_file = os.path.join(os.path.dirname(config_file), output_file)
-                    kwargs['output'] = output_file
+                if 'output' in kwargs:
+                    output_file = kwargs['output']
+                    if not os.path.isabs(output_file):
+                        output_file = os.path.join(os.path.dirname(config_file), output_file)
+                        kwargs['output'] = output_file
 
         return func(*args, **kwargs)
 
@@ -125,9 +127,9 @@ def main(inp: str = None, crs: str = None, output:str = None, graphics_command="
         swmm.plot()
     elif graphics_command == 'swmm_config':
         swmm_viz = SpatialSWMMViz(
-            inp = 'SWMM model file',
-            crs = 'Coordinate reference system (CRS) for the model',
-            output = 'Output file path for the visualization with options [*.png, *.pdf, *.svg, *.html for plotly]'
+            inp = '<SWMM model file>',
+            crs = '<Coordinate reference system (CRS) for the model>',
+            output = '<Output file path for the visualization with options [*.png, *.pdf, *.svg, *.html for plotly]>'
         )
 
         # Check if the output file is either json or yaml and export formatted dict to file
