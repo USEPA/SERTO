@@ -72,6 +72,10 @@ class SpatialSWMM:
 
     OPTIONS_SECTION_SPLIT = ["SKIP_STEADY_STATE", "RULE_STEP"]
 
+    RAINGAGES_COLUMNS = ['Name', 'Format', 'Interval', 'SCF', 'Source', 'Param1', 'Param2', 'Param3', 'Param4']
+    RAINGAGES_COLUMN_TYPES = ['str', 'str', 'str', 'float', 'str', 'float', 'float', 'float', 'float']
+    RAINGAGES_COLUMN_LENGTHS = [31, 31, 31, 16, 31, 16, 16, 16, 16]
+
     COMMENTS_COLUMNS = ['Prepended_Comments']
 
     JUNCTION_COLUMNS = ['Elevation', 'MaxDepth', 'InitDepth', 'SurDepth', 'Aponded']
@@ -157,6 +161,12 @@ class SpatialSWMM:
             crs=self._crs
         )
 
+        self._raingages: gpd.GeoDataFrame = gpd.GeoDataFrame(
+            columns=[],
+            geometry=[],
+            crs=self._crs
+        )
+
         self._sub_areas: pd.DataFrame = pd.DataFrame(columns=SpatialSWMM.SUB_AREA_COLUMNS)
         self._xsections: pd.DataFrame = pd.DataFrame(columns=SpatialSWMM.XSECTION_COLUMNS)
         self._pollutants: pd.DataFrame = pd.DataFrame(columns=SpatialSWMM.POLLUTANTS_COLUMNS)
@@ -219,6 +229,14 @@ class SpatialSWMM:
         :return: The options of the model
         """
         return self._options
+
+    @property
+    def raingages(self) -> gpd.GeoDataFrame:
+        """
+        This function returns the raingages of the model
+        :return: The raingages of the model
+        """
+        return self._raingages
 
     @property
     def nodes(self) -> gpd.GeoDataFrame:
@@ -401,6 +419,24 @@ class SpatialSWMM:
                                 model.options.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = comments
                             else:
                                 model.options.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
+
+                            comments.clear()
+
+                    elif current_section.upper() in '[RAINGAGES]':
+                        if line.startswith(';;'):
+                            pass
+                        elif line.startswith(';'):
+                            comments.append(line)
+                        else:
+                            for i in range(1, len(tokens)):
+                                model._raingages.loc[tokens[0], SpatialSWMM.RAINGAGES_COLUMNS[i - 1]] = tokens[i]
+
+                            if len(comments) > 0:
+                                model._raingages.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
+                            else:
+                                model._raingages.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
+
+                            model._raingages.loc[tokens[0], "geometry"] = Point(float(0.0), float(0.0))
 
                             comments.clear()
 
@@ -642,6 +678,17 @@ class SpatialSWMM:
                                 polygons[identifier].append((float(tokens[1]), float(tokens[2])))
                             else:
                                 polygons[identifier] = [(float(tokens[1]), float(tokens[2]))]
+                    elif current_section.upper() in '[SYMBOLS]':
+                        if line.startswith(';;'):
+                            pass
+                        elif line.startswith(';'):
+                            comments.append(line)
+                        else:
+                            coordinates[tokens[0]] = (float(tokens[1]), float(tokens[2]))
+
+        for raingage_id, _ in model._raingages.iterrows():
+            if raingage_id in coordinates:
+                model._raingages.loc[raingage_id, 'geometry'] = Point(coordinates[raingage_id])
 
         for node_id, _ in model._nodes.iterrows():
             if node_id in coordinates:

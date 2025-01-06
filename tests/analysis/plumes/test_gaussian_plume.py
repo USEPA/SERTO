@@ -47,17 +47,26 @@ class TestGaussianPlume(unittest.TestCase):
         """
 
         plume = GaussianPlume(
-            source_strength=100.0,
+            source_strength=1000000.0,
             source_location=(0.0, 0.0),
-            direction=145,
-            standard_deviation=(2500, 833)
+            direction=45,
+            standard_deviation=(2000, 50)
         )
 
+        import matplotlib
+        from matplotlib import pyplot as plt
+
+        matplotlib.use('TkAgg')
+
+        fig, ax = plt.subplots()
         concentrations = plume.concentration(self.locations_2d)
         mesh_grid_concs = concentrations.reshape((self.x.shape[0], self.y.shape[0]))
-        fig, ax = plt.subplots()
+
         cb = ax.contourf(self.x, self.y, mesh_grid_concs)
         fig.colorbar(cb, label="Concentration (Picocuries)")
+        plt.show()
+        matplotlib.use('TkAgg')
+        print("Concentrations: ", concentrations)
 
     def test_2d_gaussian_with_wind_plume(self):
         """
@@ -65,17 +74,25 @@ class TestGaussianPlume(unittest.TestCase):
         """
 
         plume = GaussianPlume(
-            source_strength=100.0,
+            source_strength=1000000.0,
             source_location=(0.0, 0.0),
-            direction=145,
-            wind_speed=30,
+            direction=45,
+            wind_speed=5,
+            turbulent_intensity=0.55
         )
 
-        concentrations = plume.concentration(self.locations_2d * 0.3048)
+        import matplotlib
+        matplotlib.use('TkAgg')
+
+        concentrations = plume.concentration(self.locations_2d)
         mesh_grid_concs = concentrations.reshape((self.x.shape[0], self.y.shape[0]))
         fig, ax = plt.subplots()
         cb = ax.contourf(self.x, self.y, mesh_grid_concs)
         fig.colorbar(cb, label="Concentration (Picocuries)")
+
+        plt.show()
+        matplotlib.use('TkAgg')
+        print("Concentrations: ", concentrations)
 
     def tearDown(self):
         """

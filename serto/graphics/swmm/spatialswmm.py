@@ -1,0 +1,434 @@
+# python imports
+from typing import List
+
+import pandas as pd
+
+# third-party imports
+import matplotlib
+import matplotlib.pyplot as plt
+import plotly
+import plotly.graph_objects as go
+import plotly.express as px
+import contextily as ctx
+import matplotlib.pyplot as plt
+
+# project imports
+from ...swmm import SpatialSWMM
+
+
+def plot_swmm_nodes_plotly(
+        swmm_model: SpatialSWMM,
+        *args, **kwargs
+) -> List[go.Scattermap]:
+    """
+    This function plots the nodes of the SWMM model
+    :return:
+    """
+    scatter_maps: List[go.Scattermap] = []
+
+    nodes_to_geo_crs = swmm_model.nodes.to_crs('EPSG:4326')
+    nodes_to_geo_crs.insert(0, 'Name', nodes_to_geo_crs.index)
+
+    # extract lat lon from geometry and append as columns
+    nodes_to_geo_crs['lon'] = nodes_to_geo_crs.geometry.x
+    nodes_to_geo_crs['lat'] = nodes_to_geo_crs.geometry.y
+
+    nodes_to_geo_crs = pd.DataFrame(nodes_to_geo_crs.drop(columns='geometry'))
+
+    junctions = nodes_to_geo_crs[nodes_to_geo_crs['NodeType'] == 'JUNCTIONS']
+    outfalls = nodes_to_geo_crs[nodes_to_geo_crs['NodeType'] == 'OUTFALLS']
+    dividers = nodes_to_geo_crs[nodes_to_geo_crs['NodeType'] == 'DIVIDER']
+    storage = nodes_to_geo_crs[nodes_to_geo_crs['NodeType'] == 'STORAGE']
+
+    # if junctions has elements create geo.Scattermap with color blue and shape circle with hover data as table of all
+    if not junctions.empty:
+        scatter_maps.append(
+            go.Scattermap(
+                name='Junctions',
+                lat=junctions['lat'],
+                lon=junctions['lon'],
+                mode='markers',
+                marker=dict(
+                    # symbol='circle',
+                    size=5,
+                    color='blue',
+                ),
+                hovertemplate='<br>'.join([
+                    f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(junctions.columns)
+                ]),
+
+                text=junctions['Name'],
+                customdata=junctions.values,
+            )
+        )
+
+    # Triangle red for outfalls
+    if not outfalls.empty:
+        scatter_maps.append(
+            go.Scattermap(
+                name='Outfalls',
+                lat=outfalls['lat'],
+                lon=outfalls['lon'],
+                mode='markers',
+                marker=dict(
+                    # symbol='triangle',
+                    size=8,
+                    color='red',
+                ),
+                hovertemplate='<br>'.join([
+                    f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(outfalls.columns)
+                ]),
+                text=outfalls['Name'],
+                customdata=outfalls.values,
+            )
+        )
+
+    # Diamond purple for dividers
+    if not dividers.empty:
+        scatter_maps.append(
+            go.Scattermap(
+                name='Dividers',
+                lat=dividers['lat'],
+                lon=dividers['lon'],
+                mode='markers',
+                marker=dict(
+                    # symbol='diamond',
+                    size=8,
+                    color='purple',
+                ),
+                hovertemplate='<br>'.join([
+                    f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(dividers.columns)
+                ]),
+                text=dividers['Name'],
+                customdata=dividers.values,
+            )
+        )
+
+    # Square light blue for storage
+    if not storage.empty:
+        scatter_maps.append(
+            go.Scattermap(
+                name='Storage',
+                lat=storage['lat'],
+                lon=storage['lon'],
+                mode='markers',
+                marker=dict(
+                    # symbol='square',
+                    size=10,
+                    color='green',
+                ),
+                hovertemplate='<br>'.join([
+                    f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(storage.columns)
+                ]),
+                text=storage['Name'],
+                customdata=storage.values,
+            )
+        )
+
+    return scatter_maps
+
+
+def plot_swmm_catchments_plotly(swmm_model: SpatialSWMM, *args, **kwargs) -> List[go.Choroplethmap]:
+    """
+    This function plots the catchments of the SWMM model
+    :param swmm_model:
+    :param args:
+    :param kwargs:
+    :return:
+    """
+    choropleth_maps: List[go.Choroplethmap] = []
+
+    subcatchments_to_geo_crs = swmm_model.subcatchments.to_crs('EPSG:4326')
+    subcatchments_to_geo_crs.insert(0, 'Name', subcatchments_to_geo_crs.index)
+
+    # if subcatchments has elements create geo.Choroplethmap with color blue and hover data as table of all
+    subcatchments_to_geo_crs_data = pd.DataFrame(subcatchments_to_geo_crs.drop(columns='geometry'))
+
+    if not subcatchments_to_geo_crs.empty:
+        choropleth_maps.append(
+            go.Choroplethmap(
+                name='Subcatchments',
+                geojson=subcatchments_to_geo_crs.__geo_interface__,
+                locations=subcatchments_to_geo_crs.index,
+                z=[1] * len(subcatchments_to_geo_crs),
+                colorscale=[[0, 'salmon'], [1, 'salmon']],
+                hovertemplate='<br>'.join([
+                    f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(subcatchments_to_geo_crs_data.columns)
+                ]),
+                text=subcatchments_to_geo_crs['Name'],
+                customdata=subcatchments_to_geo_crs_data.values,
+                showscale=False,
+                showlegend=True,
+                marker=dict(
+                    opacity=0.3,
+                )
+            )
+        )
+
+    return choropleth_maps
+
+
+def plot_swmm_links_plotly(swmm_model: SpatialSWMM, *args, **kwargs) -> List[go.Scattermap]:
+    """
+    This function plots the links of the SWMM model
+    :param swmm_model:
+    :param args:
+    :param kwargs:
+    :return:
+    """
+    link_traces: List[go.Scattermap] = []
+
+    links_to_geo_crs = swmm_model.links.to_crs('EPSG:4326')
+    links_to_geo_crs.insert(0, 'Name', links_to_geo_crs.index)
+
+    conduits = links_to_geo_crs[links_to_geo_crs['LinkType'] == 'CONDUITS']
+    conduits_data = pd.DataFrame(conduits.drop(columns='geometry'))
+
+    orifices = links_to_geo_crs[links_to_geo_crs['LinkType'] == 'ORIFICES']
+    orifices_data = pd.DataFrame(orifices.drop(columns='geometry'))
+
+    weirs = links_to_geo_crs[links_to_geo_crs['LinkType'] == 'WEIRS']
+    weirs_data = pd.DataFrame(weirs.drop(columns='geometry'))
+
+    outlets = links_to_geo_crs[links_to_geo_crs['LinkType'] == 'OUTLETS']
+    outlets_data = pd.DataFrame(outlets.drop(columns='geometry'))
+
+    if not conduits.empty:
+        first = True
+        for index, row in conduits.iterrows():
+            geometry = row['geometry']
+            link_traces.append(
+                go.Scattermap(
+                    name='Conduits',
+                    lat=[coord[1] for coord in geometry.coords],
+                    lon=[coord[0] for coord in geometry.coords],
+                    mode='lines',
+                    line=dict(
+                        color='gray',
+                        width=2
+                    ),
+                    hovertemplate='<br>'.join([
+                        f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(conduits_data.columns)
+                    ]),
+                    text=row['Name'],
+                    customdata=conduits_data.loc[index].values[None,:],
+                    showlegend=first,
+                    legendgroup='Conduits',
+                    visible=first
+                )
+            )
+            first = False
+
+    if not orifices.empty:
+        first = True
+        for index, row in orifices.iterrows():
+            geometry = row['geometry']
+            link_traces.append(
+                go.Scattermap(
+                    name='Orifices',
+                    lat=[coord[1] for coord in geometry.coords],
+                    lon=[coord[0] for coord in geometry.coords],
+                    mode='lines',
+                    line=dict(
+                        color='#7e2a18',
+                        width=4
+                    ),
+                    hovertemplate='<br>'.join([
+                        f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(orifices_data.columns)
+                    ]),
+                    text=row['Name'],
+                    customdata=orifices_data.loc[index].values[None,:],
+                    showlegend=first,
+                    legendgroup='Orifices'
+                )
+            )
+            first = False
+
+    if not weirs.empty:
+        first = True
+        for index, row in weirs.iterrows():
+            geometry = row['geometry']
+            link_traces.append(
+                go.Scattermap(
+                    name='Weirs',
+                    lat=[coord[1] for coord in geometry.coords],
+                    lon=[coord[0] for coord in geometry.coords],
+                    mode='lines',
+                    line=dict(
+                        color='#18437e',
+                        width=4.5
+                    ),
+                    hovertemplate='<br>'.join([
+                        f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(weirs_data.columns)
+                    ]),
+                    text=row['Name'],
+                    customdata=weirs_data.loc[index].values[None,:],
+                    showlegend=first,
+                    legendgroup='Weirs'
+                )
+            )
+            first = False
+
+    if not outlets.empty:
+        first = True
+        for index, row in outlets.iterrows():
+            geometry = row['geometry']
+            link_traces.append(
+                go.Scattermap(
+                    name='Outlets',
+                    lat=[coord[1] for coord in geometry.coords],
+                    lon=[coord[0] for coord in geometry.coords],
+                    mode='lines',
+                    line=dict(
+                        color='#7e1843',
+                        width=5
+                    ),
+                    hovertemplate='<br>'.join([
+                        f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(outlets_data.columns)
+                    ]),
+                    text=row['Name'],
+                    customdata=outlets_data.loc[index].values[None,:],
+                    showlegend=first,
+                    legendgroup='Outlets'
+                )
+            )
+            first = False
+
+    return link_traces
+
+
+class SpatialSWMMViz():
+    def __init__(self, inp: str, crs: str, output: str, *args, **kwargs):
+        """
+        Initialize the spatial swmm visualization object
+        :param inp: SWMM input file
+        :param crs: coordinate reference system
+        :param output: Visualization output file path
+        :param args:
+        :param kwargs:
+        """
+        self.inp = inp
+        self.crs = crs
+        self.output = output
+    def plot(self):
+        """
+        Generate the spatial swmm model
+        :return:
+        """
+        swmm_spatial_model = SpatialSWMM.read_model(model_path=self.inp, crs=self.crs)
+
+        # Check if output file extension is html for plotly otherwise use matplotlib
+        if self.output is not None and self.output.endswith('.html'):
+
+            fig = go.Figure()
+
+            catchment_traces = plot_swmm_catchments_plotly(swmm_spatial_model)
+            link_traces = plot_swmm_links_plotly(swmm_spatial_model)
+            node_traces = plot_swmm_nodes_plotly(swmm_spatial_model)
+
+            for catchment_trace in catchment_traces:
+                fig.add_trace(catchment_trace)
+
+            for node_trace in node_traces:
+                fig.add_trace(node_trace)
+
+            nodes_centroid = swmm_spatial_model.nodes.dissolve().centroid.to_crs('EPSG:4326')
+            lon = nodes_centroid.geometry.x[0]
+            lat = nodes_centroid.geometry.y[0]
+
+            fig.update_layout(
+                title=f'',
+                map_style="carto-positron",
+                showlegend=True,
+                # width=1600,
+                # height=800,
+                map={
+                    'center': {'lon': lon, 'lat': lat},
+                    'zoom': 10
+                }
+            )
+
+            plotly.offline.plot(fig, filename=self.output)
+
+        else:
+            plt.rcParams['figure.figsize'] = [8, 12]
+            plt.rcParams["figure.dpi"] = 300
+            ax = swmm_spatial_model.subcatchments.plot(
+                linewidth=0.15,
+                edgecolor='black',
+                facecolor='salmon',
+                alpha=0.5,
+                zorder=1
+            )
+
+            link_styles = {
+                'CONDUITS': 'solid',
+                'PUMPS': 'dashed',
+                'ORIFICES': 'dashdot',
+                'WEIRS': 'dotted',
+            }
+
+            link_markers = {
+                'CONDUITS': None,
+                'PUMPS': '1',
+                'ORIFICES': 'o',
+                'WEIRS': '1',
+            }
+
+            line_colors = {
+                'CONDUITS': 'blue',
+                'PUMPS': 'red',
+                'ORIFICES': 'purple',
+                'WEIRS': 'black',
+            }
+
+            line_widths = {
+                'CONDUITS': 0.45,
+                'PUMPS': 4,
+                'ORIFICES': 4,
+                'WEIRS': 4,
+            }
+
+            for link_type, linestyle in link_styles.items():
+                ax = swmm_spatial_model.links[swmm_spatial_model.links['LinkType'] == link_type].plot(
+                    ax=ax,
+                    linewidth=line_widths[link_type],
+                    color=line_colors[link_type],
+                    markersize=10,
+                    label=link_type,
+                    zorder=2,
+                    capstyle='butt',
+                )
+
+            node_markers = {
+                'JUNCTIONS': '.',
+                'OUTFALLS': 'v',
+                'STORAGES': 's',
+                'DIVIDERS': 'o',
+            }
+
+            for node_type, marker in node_markers.items():
+                ax = swmm_spatial_model.nodes[swmm_spatial_model.nodes['NodeType'] == node_type].plot(
+                    ax=ax,
+                    marker=marker,
+                    markersize=20,
+                    label=node_type,
+                    zorder=3,
+                )
+
+            plt.legend(title='Elements', loc='upper right')
+            ctx.add_basemap(ax, source=ctx.providers.CartoDB.Positron, crs=swmm_spatial_model._crs)
+            plt.savefig(self.output)
+
+
+    def to_dict(self):
+        return {
+            'inp': self.inp,
+            'crs': self.crs,
+            'output': self.output
+        }
+
+    def from_dict(self, data):
+        self.inp = data['inp']
+        self.crs = data['crs']
+        self.output = data['output']

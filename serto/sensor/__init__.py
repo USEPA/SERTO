@@ -9,12 +9,7 @@ import argparse
 
 # local imports
 
-
-def get_description():
-    return 'Run the CHAMA optimization'
-
-
-def configure_subparser(sub_parser: argparse.ArgumentParser):
+def configure_subparser(sub_parsers: argparse.ArgumentParser):
     """
     Configure the subparser for the chamaoptimizer command.
     :param sub_parser:
@@ -22,24 +17,30 @@ def configure_subparser(sub_parser: argparse.ArgumentParser):
     :return:
     """
 
-    parser = sub_parser.add_parser(
-        'sensor_placement_chama.yml',
-        help='Run CHAMA optimization functions'
+    sensor_placement_parser = sub_parser.add_parser(
+        'sensor',
+        help='Sensor placement optimization'
     )
 
-    parser.add_argument(
-        '-s',
-        '--step',
-        choices=['gen_sensors', 'sensormodel', 'sensormodel'],
-        required=True,
-        help='The CHAMA optimization step to run'
-             'gen_sensors: Generate sensor locations'
+    chama_sensor_placement_subparsers = sensor_placement_parser.add_subparsers(
+        title='Chama Sensor Placement',
+        description='Sensor placement optimization commands to execute',
+        help='Additional help'
     )
-
 
 def process_args(args: argparse.Namespace):
     """
     Process the arguments for the chamaoptimizer command.
+    :param args:
+    :return:
+    """
+
+    pass
+
+
+def main(parser_args: argparse.Namespace, *args, **kwargs):
+    """
+    Main function for the chamaoptimizer command.
     :param args:
     :return:
     """

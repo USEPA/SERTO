@@ -6,72 +6,36 @@ The serto.analysis module provides the functionality for various analysis tasks.
 import argparse
 import pandas as pd
 
+
 # third party imports
 
 # local imports
+from .plumes import configure_subparsers as configure_plume_parsers
 
 
 def get_description():
     return 'Run the CHAMA optimization'
 
 
-def configure_subparser(sub_parser: argparse.ArgumentParser):
+def configure_subparser(sub_parsers: argparse.ArgumentParser):
     """
     Configure the subparser for the chamaoptimizer command.
     :param sub_parser:
     :return:
     """
-    parser = sub_parser.add_parser(
-        'wind',
-        help='Run wind speed and direction analysis'
+    analysis_parser = sub_parsers.add_parser('analysis', help='Perform specific analysis')
+    analysis_subparsers = analysis_parser.add_subparsers(
+        title='analysis',
+        description='Analysis tasks to execute',
+        help='Additional help',
+        dest='analysis_command'
     )
 
-    sub_parsers = sub_parser.add_subparsers(
-        title='wind',
-        description='Wind speed and direction analysis commands to execute',
-        help='Additional help'
-    )
+    configure_plume_parsers(analysis_subparsers)
 
-    # Sample
-    sample_parser = sub_parsers.add_parser(
-        'sample',
-        help='Sample wind speed and direction data'
-    )
 
-    sample_parser.add_argument(
-        '-f',
-        '--csv-file',
-        help='Wind speed and direction file',
-        required=True,
-        action='store'
-    )
 
-    sample_parser.add_argument(
-        '-d',
-        '--dir',
-        help='Wind direction column name',
-        required=True,
-        action='store',
-        default='drct',
-    )
-
-    sample_parser.add_argument(
-        '-s',
-        '--speed',
-        help='Wind speed column name',
-        required=True,
-        action='store',
-        default='sknt',
-    )
-
-    sample_parser.add_argument(
-        '--dbins',
-        help='Num wind direction bins',
-        required=True,
-        action='store',
-        default='sknt',
-    )
-
+    # Wind sample
     # Plot wind rose
 
     # Plot Quiver
@@ -90,14 +54,9 @@ def sample(data: pd.DataFrame, dir: str, speed: str, dbins: int, *args, **kwargs
     """
     return GaussianPlume(data, dir, speed, dbins)
 
-def process_args(data: pd.DataFrame, dir: str, speed: str,  *args, **kwargs):
+
+def main(args: argparse.Namespace):
     """
-    Process the arguments for the chamaoptimizer command.
-    :param data:
-    :param dir:
-    :param speed:
-    :param args:
-    :param kwargs:
-    :return:
     """
-    return args
+    if args.analysis.wind.sample:
+        sample(parser_args.csv_file, parser_args.dir, parser_args.speed, parser_args.dbins)

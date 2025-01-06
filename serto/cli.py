@@ -1,6 +1,16 @@
+# python imports
 import argparse
-from . import __version__
 
+# third party imports
+
+
+# local imports
+from . import __version__
+from . import analysis
+from . import ensemble
+from . import graphics
+from . import moo
+from . import sensor
 
 def main():
     """
@@ -10,12 +20,13 @@ def main():
 
     parser = argparse.ArgumentParser(
         prog='serto',
-        description='The Stormwater Emergency Response Tool & Optimizer (SERTO)',
+        description='The Stormwater Emergency Response Tool & Optimizer (SERTO)\n'
+                    'for emergency response and optimization applications in stormwater systems',
         epilog='Developed by the US EPA Office of Research and Development',
     )
 
     parser.add_argument(
-        "-v","--verbose",
+        "-v", "--verbose",
         help="Increase output verbosity",
         action="store_true",
     )
@@ -29,53 +40,28 @@ def main():
 
     subparsers = parser.add_subparsers(dest='command')
 
-    sensor_placement_parser = subparsers.add_parser('sp', help='Sensor placement optimization')
-    sensor_placement_parser.add_argument(
-        "-c", "--config",
-        type=str,
-        help='Path to the configuration file'
-    )
+    # Configure the subparsers
+    graphics.configure_subparsers(subparsers)
+    analysis.configure_subparser(subparsers)
 
-    analysis_parser = subparsers.add_parser('analysis', help='Perform specific analysis')
-    analysis_parser.add_argument(
-        "-c", "--config",
-        type=str,
-        help='Path to the configuration file'
-    )
-
-    multiobjective_optimization_parser = subparsers.add_parser(
-        name='moo',
-        help='Perform multi-objective optimization'
-    )
-    multiobjective_optimization_parser.add_argument(
-        "-c", "--config",
-        type=str,
-        help='Path to the configuration file'
-    )
-
-    ensemble_parser = subparsers.add_parser(
-        name='ensemble',
-        help='Create an ensemble of models and run them locally, an HPC, or in the cloud'
-    )
-    ensemble_parser.add_argument(
-        "-c", "--config",
-        type=str,
-        help='Path to the configuration file'
-    )
-
-    graphics_parser = subparsers.add_parser('graphics', help='Create graphics for the results')
-    graphics_parser.add_argument(
-        "-c", "--config",
-        type=str,
-        help='Path to the configuration file'
-    )
 
     args = parser.parse_args()
 
-    # if args.command == 'run':
-    #     if args.opti_type == 'sensor_placement_chama.yml':
-    #         from swmmoptimizer import chama_optimization
-    #         chama_optimization.run(args.config, use_existing=args.use_existing)
+    if args.command == 'sp':
+        from .sensor import main as sp_main
+        sp_main(args)
+    elif args.command == 'analysis':
+        from .analysis import main as analysis_main
+        analysis_main(args)
+    elif args.command == 'moo':
+        from .moo import main as moo_main
+        moo_main(args)
+    elif args.command == 'ensemble':
+        from .ensemble import main as ensemble_main
+        ensemble_main(args)
+    elif args.command == 'graphics':
+        from .graphics import main as graphics_main
+        graphics_main(args)
 
 
 if __name__ == '__main__':
