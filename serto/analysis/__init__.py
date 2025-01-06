@@ -23,7 +23,7 @@ def configure_subparser(sub_parsers: argparse.ArgumentParser):
     :param sub_parser:
     :return:
     """
-    analysis_parser = sub_parsers.add_parser('analysis', help='Perform specific analysis')
+    analysis_parser = sub_parsers.add_parser('analysis', help='Perform specific analysis tasks')
     analysis_subparsers = analysis_parser.add_subparsers(
         title='analysis',
         description='Analysis tasks to execute',

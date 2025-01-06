@@ -10,7 +10,7 @@ import pandas as pd
 
 # local imports
 from .swmm import main as swmm_main, configure_subparsers as configure_swmm_visualization_parser
-from .analysis.plumes import main as plume_main, configure_subparsers as configure_plume_visualization_parser
+# from .analysis import main as analysis_main, configure_subparsers as configure_analysis_parser
 
 
 def configure_subparsers(sub_parsers: argparse._SubParsersAction):
@@ -28,10 +28,7 @@ def configure_subparsers(sub_parsers: argparse._SubParsersAction):
     )
 
     configure_swmm_visualization_parser(graphics_subparsers)
-    configure_plume_visualization_parser(graphics_subparsers)
-
-
-
+    # configure_analysis_parser(graphics_subparsers)
 
 def main(parser_args: argparse.Namespace, *args, **kwargs):
     """

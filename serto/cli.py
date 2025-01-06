@@ -42,7 +42,7 @@ def main():
 
     # Configure the subparsers
     graphics.configure_subparsers(subparsers)
-    analysis.configure_subparser(subparsers)
+    # analysis.configure_subparser(subparsers)
 
 
     args = parser.parse_args()
