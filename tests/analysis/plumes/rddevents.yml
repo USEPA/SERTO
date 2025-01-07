@@ -1,14 +1,12 @@
 swmm_input_file: "swmm_input_file1.inp"
 crs: "EPSG:3089"
-contaminant_loading_resolution:
-    x_resolution: 120
-    y_resolution: 120
+contaminant_loading_resolution: 250
 release_start_date: "2020-01-01 00:00:00"
 contaminant_name: "Cesium"
-contaminant_unit: "mg" # Counts or None
+contaminant_unit: "mg"
 plume_type: Empirical
 event_matrix:
-    contaminant_amounts: [1.0, 2.0, 3.0]
+    contaminant_amounts: [266e12]
     wind_directions: [0, 25, 50, 360]
     wind_speeds: [1.0, 2.0, 3.0]
     lateral_turbulent_intensities: [0.0, 0.0, 0.0] # For physics formulation
@@ -33,7 +31,7 @@ event_matrix:
                 x: 0
                 y: 0
         grid:
-            x_resolution: 10000
-            y_resolution: 10000
+            x_resolution: 500
+            y_resolution: 500
 
 
