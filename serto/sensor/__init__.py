@@ -1,5 +1,5 @@
 """
-The serto.sensor module provides the functionality for CHAMA optimization.
+The serto.sensor module provides the functionality for sensor placement optimization.
 """
 
 # python imports
@@ -8,8 +8,9 @@ import argparse
 # third party imports
 
 # local imports
+from .chama import main as chama_main, configure_subparsers as configure_chama_subparsers
 
-def configure_subparser(sub_parsers: argparse.ArgumentParser):
+def configure_subparsers(sub_parsers: argparse._SubParsersAction):
     """
     Configure the subparser for the chamaoptimizer command.
     :param sub_parser:
@@ -17,32 +18,29 @@ def configure_subparser(sub_parsers: argparse.ArgumentParser):
     :return:
     """
 
-    sensor_placement_parser = sub_parser.add_parser(
+    sensor_placement_parser = sub_parsers.add_parser(
         'sensor',
         help='Sensor placement optimization'
     )
 
     chama_sensor_placement_subparsers = sensor_placement_parser.add_subparsers(
-        title='Chama Sensor Placement',
+        title='Sensor placement optimization',
         description='Sensor placement optimization commands to execute',
-        help='Additional help'
+        help='Additional help',
+        dest='sensor_command'
     )
 
-def process_args(args: argparse.Namespace):
-    """
-    Process the arguments for the chamaoptimizer command.
-    :param args:
-    :return:
-    """
-
-    pass
-
+    configure_chama_subparsers(chama_sensor_placement_subparsers)
 
 def main(parser_args: argparse.Namespace, *args, **kwargs):
     """
     Main function for the chamaoptimizer command.
-    :param args:
+    :param args: Additional arguments to pass to the main function for the chamaoptimizer command (if any)
+    :param kwargs: Additional keyword arguments to pass to the main function for the chamaoptimizer command (if any)
     :return:
     """
 
-    pass
+    if parser_args.sensor_command == 'chama':
+        chama_main(**vars(parser_args))
+    else:
+        raise ValueError(f"Invalid sensor command: {parser_args.sensor_command}")

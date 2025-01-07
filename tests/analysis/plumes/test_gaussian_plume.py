@@ -7,7 +7,7 @@ import numpy as np
 # third-party imports
 
 # local imports
-from ....analysis.plumes import GaussianPlume
+from serto.analysis.plumes import GaussianPlume
 
 
 class TestGaussianPlume(unittest.TestCase):

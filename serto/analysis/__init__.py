@@ -6,18 +6,16 @@ The serto.analysis module provides the functionality for various analysis tasks.
 import argparse
 import pandas as pd
 
-
 # third party imports
 
 # local imports
-from .plumes import configure_subparsers as configure_plume_parsers
+from .plumes import main as plumes_main, configure_subparsers as configure_plumes_subparsers
+from .precipitation import main as precipitation_main, configure_subparsers as configure_precipitation_subparsers
+from .wind import main as wind_main, configure_subparsers as configure_wind_subparsers
+from .flow import main as flow_main, configure_subparsers as configure_flow_subparsers
 
 
-def get_description():
-    return 'Run the CHAMA optimization'
-
-
-def configure_subparser(sub_parsers: argparse.ArgumentParser):
+def configure_subparsers(sub_parsers: argparse._SubParsersAction):
     """
     Configure the subparser for the chamaoptimizer command.
     :param sub_parser:
@@ -31,32 +29,24 @@ def configure_subparser(sub_parsers: argparse.ArgumentParser):
         dest='analysis_command'
     )
 
-    configure_plume_parsers(analysis_subparsers)
+    configure_flow_subparsers(analysis_subparsers)
+    configure_plumes_subparsers(analysis_subparsers)
+    configure_precipitation_subparsers(analysis_subparsers)
+    configure_wind_subparsers(analysis_subparsers)
 
-
-
-    # Wind sample
-    # Plot wind rose
-
-    # Plot Quiver
-
-
-def sample(data: pd.DataFrame, dir: str, speed: str, dbins: int, *args, **kwargs):
+def main(parser_args: argparse.Namespace, *args, **kwargs):
     """
-    Sample the wind speed and direction data
-    :param data:
-    :param dir:
-    :param speed:
-    :param dbins:
-    :param args:
-    :param kwargs:
-    :return:
+    Main function for the analysis command.
+    :param args: Additional arguments to pass to the main function for the chamaoptimizer command (if any)
+    :param kwargs: Additional keyword arguments to pass to the main function for the chamaoptimizer command (if any)
     """
-    return GaussianPlume(data, dir, speed, dbins)
-
-
-def main(args: argparse.Namespace):
-    """
-    """
-    if args.analysis.wind.sample:
-        sample(parser_args.csv_file, parser_args.dir, parser_args.speed, parser_args.dbins)
+    if parser_args.analysis_command == 'plumes':
+        plumes_main(parser_args)
+    elif parser_args.analysis_command == 'precip':
+        precipitation_main(parser_args)
+    elif parser_args.analysis_command == 'wind':
+        wind_main(parser_args)
+    elif parser_args.analysis_command == 'flow':
+        flow_main(parser_args)
+    else:
+        raise ValueError(f"Invalid analysis command: {parser_args.analysis_command}")

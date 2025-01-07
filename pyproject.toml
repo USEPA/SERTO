@@ -97,6 +97,6 @@ packages = ['serto']
 pyproject = ["pyproject.toml"]
 
 [project.scripts]
-serto = "serto.cli:main"
+serto = "serto:main"
 
 # Removed invalid [options.entry_points] section

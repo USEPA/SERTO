@@ -1,0 +1,46 @@
+ensemble:
+  name: Bancklick Ensemble
+  swmm_input_file: "swmm_input_file1.inp"
+  description: "This is a Bancklick ensemble"
+  naming_convention: "Bancklick_[event]_[parameter]_[value]"
+  threads_per_simulation: 4
+  reporting_time_step: '00:15:00'
+  output_path: "output"
+  swmm:
+    scenario_matrix:
+        precipitation_events:
+            - event:
+                name: "Event 1"
+                description: "This is the first event"
+                start_date: "2020-01-01 00:00:00"
+                end_date: "2020-01-01 01:00:00"
+                use_hot_start: "hotstart1.hsf"
+                rainfall_file: "rainfall1.dat"
+                climate_file: "climate1.dat"
+            - event:
+                name: "Event 2"
+                description: "This is the second event"
+                start_date: "2020-01-02 00:00:00"
+                end_date: "2020-01-02 01:00:00"
+                use_hot_start: "hotstart2.hsf"
+                rainfall_file: "rainfall2.dat"
+                climate_file: "climate2.dat"
+        constant_parameters:
+            - constant_parameter:
+                name: "Parameter 1"
+                attribute_type: "subcatchment" # node, link, subcatchment, system, pollutant
+                attribute_name: "initial_build_up" # Optional for system and pollutant
+                element_name: "Subcatchment 1" # Optional for system and pollutant
+                value: 40000000000000 # String (For timeseries filepath), Integer, Float,
+                callback_functions:
+                  - on_before_initialize # on_after_initialize, on_before_run, on_after_run, on_after_step
+        variable_parameters:
+            - variable_parameter:
+                name: "Parameter 1"
+                description: "This is the first parameter"
+                module: "swmm"
+                module_path: "swmm"
+                module_kwargs:
+                  argument1: "value1"
+                  argument2: "value2"
+

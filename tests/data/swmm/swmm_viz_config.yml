@@ -1,3 +1,0 @@
-inp: test_model.inp
-crs: EPSG:3089
-output: test_model_viz.html

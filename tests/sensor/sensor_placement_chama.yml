@@ -1,0 +1,14 @@
+sensor_placement_optimization:
+  ensemble_configuration: ensemble.yml
+  analysis_output_path: "output"
+  pollutant: "Cesium"
+  swmm_node_type_sensors:
+    - Outfalls
+    - Junctions
+    - StorageUnits
+  chama_configuration:
+    sensor_budget: 10
+    detection_threshold: 0.1
+    formulation: "coverage"
+    optimization_approach: "scenario-time"
+    undetected_impact: 2678400

@@ -73,15 +73,19 @@ def config_decorator(func: Callable[Any, Any]) -> Callable[Any, Any]:
     :return:  wrapper function
     """
     def wrapper(*args, **kwargs):
+        """
+        Wrapper function to parse configuration files and update kwargs with the parsed values
+        :param args:
+        :param kwargs:
+        :return:
+        """
 
         if 'config' in kwargs:
             # check if yaml or json and parse into kwargs
 
             config_file = kwargs['config']
 
-            if config_file is None:
-                pass
-            else:
+            if not config_file is None:
                 if config_file.endswith('.json'):
                     import json
                     with open(config_file, 'r') as f:
@@ -112,9 +116,7 @@ def config_decorator(func: Callable[Any, Any]) -> Callable[Any, Any]:
 
         return func(*args, **kwargs)
 
-
     return wrapper
-
 
 @config_decorator
 def main(inp: str = None, crs: str = None, output:str = None, graphics_command="swmm", *args, **kwargs):
