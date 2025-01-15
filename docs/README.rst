@@ -3,9 +3,9 @@
    :alt: Logo
 
 
-========================================
+===========================================================
 The Stormwater Emergency Response Tool & Optimizer (SERTO)
-========================================
+===========================================================
 
 |LicenseMIT| |Build and Unit Tests| |Build and Regression Tests| |Documentation| |Nightly wheels| |PyPi| |PythonVersion| |Monthly Downloads|  |DOI|
 
@@ -43,12 +43,12 @@ response applications in stormwater systems. The official SERTO software reposit
 GitHub repository (https://github.com/USEPA/serto). Releases are also made available via PyPI and conda-forge.
 
 Citing SERTO
-===========
+===============
 
 * Buahin C. A. and Mikelonis A. (2024). The Stormwater Emergency Response Tool & Optimizer (SERTO) Manual:
 
 US EPA Disclaimer
-=================
+====================
 
 The U.S. Environmental Protection Agency through its Office of Research funded the research described here.
 It has NOT been subjected to the Agency's review and has NOT been approved for publication yet. Note that approval

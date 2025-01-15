@@ -31,7 +31,7 @@ build-backend = "setuptools.build_meta"
 name = "serto"
 dynamic = ["version"]
 description = "A Python package for optimizing SWMM models for infastructure design, operational control, and emergency response applications"
-readme = {file = "README.md", content-type = "text/markdown"}
+readme = {file = "docs\\README.rst", content-type = "text/restructuredtext"}
 license = {file = "LICENSE"}
 keywords = ["SWMM", "optimization", "water", "stormwater", "modeling", "hydrology", "hydraulics", "wastewater", "infrastructure", "design", "control", "emergency", "response"]
 requires-python = ">=3.8"

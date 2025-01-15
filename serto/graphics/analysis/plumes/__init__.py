@@ -36,6 +36,49 @@ def configure_subparsers(graphics_subparsers: argparse.ArgumentParser):
     )
 
     plume_visualization_parser.add_argument(
+        "--crs",
+        help="Coordinate reference system",
+        action="store",
+        required=True,
+    )
+
+    plume_visualization_parser.add_argument(
+        "--value",
+        help="Contaminant initial value",
+        action="store",
+        required=True,
+    )
+
+    plume_visualization_parser.add_argument(
+        "--ptype",
+        help="Plume type",
+        action="store",
+        choices=["EMPIRICAL", "PHYSICS_BASED"],
+    )
+
+    plume_visualization_parser.add_argument(
+        "--spres",
+        help="Spatial resolution of the plume",
+        action="store",
+        default=50,
+    )
+
+    plume_visualization_parser.add_argument(
+        "--pname",
+        help="Name of pollutant",
+        action="store",
+        default="Cesium",
+    )
+
+    plume_visualization_parser.add_argument(
+        "--units",
+        help="Units of the pollutant",
+        action="store",
+        default="Curies",
+    )
+
+
+    plume_visualization_parser.add_argument(
         '-o',
         '--output',
         help='Output file path',

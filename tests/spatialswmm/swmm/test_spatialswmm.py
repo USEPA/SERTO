@@ -5,7 +5,7 @@ import unittest
 
 # project imports
 from serto.swmm import SpatialSWMM
-from serto.tests.data import TEST_SWMM_INPUT_FILE
+from . import EXAMPLE_SWMM_TEST_MODEL_A
 
 
 class TestSpatialSWMM(unittest.TestCase):
@@ -18,7 +18,10 @@ class TestSpatialSWMM(unittest.TestCase):
         Test the loading of a SWMM model
         :return:
         """
-        model = SpatialSWMM.read_model(TEST_SWMM_INPUT_FILE, crs='EPSG:3089')
+        model = SpatialSWMM.read_model(
+            model_path=EXAMPLE_SWMM_TEST_MODEL_A['filepath'],
+            crs=EXAMPLE_SWMM_TEST_MODEL_A['crs']
+        )
 
         title = ['Banklick Creek (Downstream) SWMM model containing surveyed open channel sections, bridges from '
                  'previous HEC-RAS model, and surveyed pipes and manholes for planning level watershed assessment.  '

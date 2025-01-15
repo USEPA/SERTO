@@ -45,7 +45,7 @@ extensions = [
 ]
 
 add_function_parentheses = True
-add_module_names = True
+add_module_names = False
 python_display_short_literal_types = True
 
 toc_object_entries = True
@@ -149,7 +149,9 @@ intersphinx_mapping = {
 # directories to ignore when looking for source files.
 exclude_patterns = [
     '_build',
-    'tests'
+    'tests',
+    'baseflow'
+    '*\\cli.py'
 ]
 
 # The reST default role (used for this markup: `text`) to use for all
@@ -427,6 +429,7 @@ texinfo_documents = [
     ),
 ]
 
+
 # Documents to append as an appendix to all manuals.
 # texinfo_appendices = []
 
@@ -438,3 +441,17 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 # texinfo_no_detailmenu = False
+
+# conf.py
+def skip_member(app, what, name, obj, skip, options):
+    exclude = [
+        'main',
+        'configure_subparsers',
+        'process_args_decorator',
+        'process_args',
+    ]
+    return True if name in exclude else skip
+
+
+def setup(app):
+    app.connect('autodoc-skip-member', skip_member)

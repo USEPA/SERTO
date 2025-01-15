@@ -5,22 +5,23 @@ import unittest
 
 # project imports
 from serto.swmm import SpatialSWMM
-from serto.graphics.swmm import (
-    plot_swmm_nodes
-)
-from tests.data.swmm import TEST_SWMM_INPUT_FILE
+from serto.graphics.swmm import SpatialSWMMVisualization
+from tests.spatialswmm.swmm import EXAMPLE_SWMM_TEST_MODEL_A
 
 
 class TestSpatialSWMMVizualization(unittest.TestCase):
 
     def setUp(self):
-        self.model = SpatialSWMM.read_model(TEST_SWMM_INPUT_FILE, crs='EPSG:3089')
+        self.model = SpatialSWMM.read_model(
+            model_path=EXAMPLE_SWMM_TEST_MODEL_A['filepath'],
+            crs=EXAMPLE_SWMM_TEST_MODEL_A['crs']
+        )
 
     def test_plot_model(self):
         """
         Test the plot_model function
         :return:
         """
-        node_traces = plot_swmm_nodes(self.model)
+        node_traces = SpatialSWMMVisualization.plot_nodes_plotly(self.model)
 
         self.assertEqual(len(node_traces), 1)
