@@ -14,14 +14,13 @@ import argparse
 # third party imports
 
 # local imports
-from .defaults import Defaults
+from .defaults import SERTODefaults, IDictable, SERTONumpyEncoder
 from . import swmm
 from . import analysis
 from . import ensemble
 from . import graphics
 from . import moo
 from . import sensor
-
 
 
 def main():

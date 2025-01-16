@@ -2,7 +2,7 @@
 
 """
 # python imports
-from typing import List, Dict
+from typing import List, Dict, Tuple, Union
 
 import pandas as pd
 
@@ -27,6 +27,206 @@ class PrecipitationVisualization:
 
     def __init__(self):
         pass
+
+    @staticmethod
+    def __convert_splom_to_scatter(splom: go.Splom) -> go.Scatter:
+        scatter = go.Scatter(
+            x=splom['dimensions'][0]['values'],
+            y=splom['dimensions'][1]['values'],
+            mode='markers',
+            marker=splom['marker'].to_plotly_json(),
+            name=splom['name'],
+            opacity=splom['opacity'],
+            showlegend=splom['showlegend'],
+            legendgroup=splom['legendgroup'],
+            legendrank=splom['legendrank'],
+            legendwidth=splom['legendwidth'],
+            customdata=splom['customdata'],
+            hoverinfo=splom['hoverinfo'],
+            hovertemplate=splom['hovertemplate'],
+            hovertext=splom['hovertext'],
+            ids=splom['ids'],
+            selected=splom['selected'].to_plotly_json(),
+            selectedpoints=splom['selectedpoints'],
+            unselected=splom['unselected'].to_plotly_json(),
+            visible=splom['visible'],
+            xhoverformat=splom['xhoverformat'],
+            yhoverformat=splom['yhoverformat'],
+        )
+        return scatter
+
+    @staticmethod
+    def plot_events(
+            events: pd.DataFrame,
+            rain_gauge_names: List[str] = None,
+            event_plot_attributes: List[str] = None,
+            event_plot_attribute_labels: List[str] = None,
+            plot_clusters: bool = False,
+            *args, **kwargs
+    ) -> List[Tuple[go.Figure, Union[go.Figure, None]]]:
+        """
+        This function plots the precipitation events matrix for given rain gauge names
+        :param events: DataFrame of events data
+        :param rain_gauge_names:  List of rain gauge names
+        :param event_plot_attributes:  List of event plot attributes
+        :param event_plot_attribute_labels:  List of event plot attribute labels
+        :param plot_clusters:
+        :return:
+        """
+
+        local_events = events.copy()
+
+        figures: List[Tuple[go.Figure, Union[go.Figure, None]]] = []
+
+        if rain_gauge_names is not None:
+            for rain_gauge_name in rain_gauge_names:
+                event_plot_attributes = [
+                    (rain_gauge_name, event_plot_attribute) for event_plot_attribute in event_plot_attributes
+                    if (rain_gauge_name, event_plot_attribute) in events.columns
+                ]
+
+                # Error if no event plot attributes is empty
+                if len(event_plot_attributes) == 0:
+                    raise ValueError('No event plot attributes found in the events DataFrame')
+                else:
+                    if 'cluster' in local_events.columns and plot_clusters:
+                        plot_events = local_events[[*event_plot_attributes, 'cluster']]
+                    else:
+                        plot_events = local_events[event_plot_attributes]
+
+                    if event_plot_attribute_labels is not None:
+                        if len(event_plot_attributes) == len(event_plot_attribute_labels):
+                            plot_events.rename(
+                                columns=dict(zip(event_plot_attributes, event_plot_attribute_labels)),
+                                inplace=True
+                            )
+                            event_plot_attributes = event_plot_attribute_labels
+                        else:
+                            raise ValueError('Event plot attributes and labels must be the same length')
+
+                    category_orders = dict(cluster=np.sort(
+                        plot_events.cluster.unique())) if 'cluster' in plot_events.columns and plot_clusters else None
+
+                    fig = px.scatter_matrix(
+                        plot_events,
+                        dimensions=event_plot_attributes,
+                        color='cluster' if 'cluster' in plot_events.columns and plot_clusters else None,
+                        category_orders=category_orders,
+                        color_discrete_sequence=px.colors.qualitative.Plotly,
+                        title=f'Rainfall Events for Gauge: {rain_gauge_name}'
+                    )
+
+                    summary_fig = []
+
+                    if 'cluster' in local_events.columns and plot_clusters:
+                        plot_events = plot_events.sort_values('cluster')
+                        for f, event_plot_attribute in enumerate(event_plot_attributes):
+                            summary_fig.append(
+                                go.Box(
+                                    x=plot_events['cluster'],
+                                    y=plot_events[event_plot_attribute],
+                                    name=f'{event_plot_attribute}',
+                                    hovertemplate='<br>'.join([
+                                        f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in
+                                        enumerate(plot_events.columns)
+                                    ]),
+                                    customdata=plot_events.values,
+                                    boxpoints='all',
+                                    notched=True,
+                                    showwhiskers=True,
+                                )
+                            )
+
+                        summary_fig = go.Figure(summary_fig)
+
+                        layout = dict(
+                            yaxis=dict(
+                                range=[0, None],
+                                showline=True,
+                            )
+                        )
+
+                        summary_fig.update_layout(
+                            xaxis=dict(
+                                title='Clusters',
+                            ),
+                            barmode='group',
+                            **layout
+                        )
+
+                    figures.append((fig, summary_fig))
+
+        else:
+
+            if 'cluster' in local_events.columns and plot_clusters:
+                plot_events = local_events[[*event_plot_attributes, 'cluster']]
+            else:
+                plot_events = local_events[event_plot_attributes]
+
+            if event_plot_attribute_labels is not None:
+                if len(event_plot_attributes) == len(event_plot_attribute_labels):
+                    plot_events.rename(
+                        columns=dict(zip(event_plot_attributes, event_plot_attribute_labels)),
+                        inplace=True
+                    )
+                    event_plot_attributes = event_plot_attribute_labels
+                else:
+                    raise ValueError('Event plot attributes and labels must be the same length')
+
+            category_orders = dict(cluster=np.sort(
+                plot_events.cluster.unique())) if 'cluster' in plot_events.columns and plot_clusters else None
+
+            fig = px.scatter_matrix(
+                plot_events,
+                category_orders=category_orders,
+                dimensions=event_plot_attributes,
+                color='cluster' if 'cluster' in plot_events.columns and plot_clusters else None,
+                title=f'Rainfall Events',
+            )
+
+            fig.update_traces(diagonal_visible=False)
+
+            summary_fig = []
+
+            if 'cluster' in local_events.columns and plot_clusters:
+                plot_events = plot_events.sort_values('cluster')
+                for f, event_plot_attribute in enumerate(event_plot_attributes):
+                    summary_fig.append(
+                        go.Box(
+                            x=plot_events['cluster'],
+                            y=plot_events[event_plot_attribute],
+                            name=f'{event_plot_attribute}',
+                            hovertemplate='<br>'.join([
+                                f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(plot_events.columns)
+                            ]),
+                            customdata=plot_events.values,
+                            showlegend=True,
+                            boxpoints='all',
+                            notched=True,
+                            showwhiskers=True,
+                        )
+                    )
+
+                summary_fig = go.Figure(summary_fig)
+
+                layout = dict(
+                    yaxis=dict(
+                        range=[0, None],
+                        showline=True,
+                    )
+                )
+
+                summary_fig.update_layout(
+                    xaxis=dict(
+                        title='Clusters',
+                    ),
+                    barmode='group',
+                    **layout
+                )
+
+            figures.append((fig, summary_fig))
+
+        return figures
 
     @staticmethod
     def plot_precipitation(

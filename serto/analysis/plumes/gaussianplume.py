@@ -17,9 +17,10 @@ import geopandas as gpd
 from shapely.geometry import Polygon
 
 # local imports
+from ... import IDictable
 from ...swmm import SpatialSWMM
 
-class GaussianPlume:
+class GaussianPlume(IDictable):
     """
     This class generates a Gaussian plume
     """
@@ -35,7 +36,7 @@ class GaussianPlume:
             self,
             source_strength: float,
             source_location: Tuple[float, float],
-            direction: float,
+            wind_direction: float,
             standard_deviation: Tuple[float, float] = None,
             wind_speed: float = 10.0,
             turbulent_intensity: float = 0.25,
@@ -52,7 +53,7 @@ class GaussianPlume:
         :param source_strength: Source strength in kg/s
         :param source_location: An array of the form [x, y]
           specifying the location of the source in meters
-        :param direction: Angle in degrees for direction of plume in degrees
+        :param wind_direction: Angle in degrees for direction of plume in degrees
           from the x-axis
         :param standard_deviation: An array of the form [downwind, crosswind]
           specifying the extent of the plume
@@ -62,15 +63,15 @@ class GaussianPlume:
 
         self.source_strength = source_strength
         self.source_location = source_location
-        self.direction = direction
+        self.wind_direction = wind_direction
         self.wind_speed = wind_speed
         self.turbulent_intensity = turbulent_intensity
 
         self.standard_deviation = standard_deviation
 
         self._direction_vector = np.squeeze(np.array([
-            math.cos(math.radians(self.direction)),
-            math.sin(math.radians(self.direction))
+            math.cos(math.radians(self.wind_direction)),
+            math.sin(math.radians(self.wind_direction))
         ]))
 
         self._plume_type = self.PlumeType.PHYSICS_BASED if self.standard_deviation is None else self.PlumeType.EMPIRICAL
@@ -217,3 +218,29 @@ class GaussianPlume:
 
         return concentration_polygons
 
+    def to_dict(self, base_directory: str = None) -> dict:
+        """
+        This function converts the plume object to a JSON object
+        :param base_directory: The base directory for the plume object
+        :return: The JSON object
+        """
+
+        return {
+            "source_strength": self.source_strength,
+            "source_location": self.source_location,
+            "direction": self.direction,
+            "wind_speed": self.wind_speed,
+            "turbulent_intensity": self.turbulent_intensity,
+            "standard_deviation": self.standard_deviation,
+            "plume_type": self.plume_type.name
+        }
+
+    @staticmethod
+    def from_dict(cls, data: dict, base_directory: str = None) -> GaussianPlume:
+        """
+        This function initializes the plume object from a JSON object
+        :param arguments: The JSON object
+        :param base_directory: The base directory for the plume object
+        :return: GaussianPlume object
+        """
+        return GaussianPlume(**arguments)

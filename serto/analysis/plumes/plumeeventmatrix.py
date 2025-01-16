@@ -15,11 +15,12 @@ import pandas as pd
 from numpy.typing import NDArray
 
 # local imports
+from ... import IDictable
 from ...swmm import SpatialSWMM
 from . import GaussianPlume
 
 
-class PlumeEventMatrix:
+class PlumeEventMatrix(IDictable):
     """
     This class generates a plume event matrix
     TODO: Add wind event probabilities to the plume event matrix
@@ -250,7 +251,12 @@ class PlumeEventMatrix:
 
         return pd.DataFrame(plume_summaries)
 
-    def to_dict(self):
+    def to_dict(self, base_directory: str = None) -> dict:
+        """
+        Convert the object to a dictionary
+        :param base_directory: The base directory for relative paths
+        :return: The dictionary
+        """
         output = {}
         output['swmm_input_file'] = self.swmm_input_file
         output['contaminant_loading_resolution'] = {
@@ -258,5 +264,14 @@ class PlumeEventMatrix:
             'y_resolution': self.contaminant_loading_resolution[1]
         }
 
-    def from_dict(self, data: Dict):
+        return output
+
+    @classmethod
+    def from_dict(cls, data: dict, base_directory: str = None) -> 'PlumeEventMatrix':
+        """
+        Create an object from a dictionary representation
+        :param data: The dictionary
+        :param base_directory: The base directory for relative paths
+        :return: The object
+        """
         pass
