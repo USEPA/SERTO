@@ -1,0 +1,16 @@
+- Model visualization
+- Plume 
+    - Single plume
+    - Small ensemble 
+- In another notebooks look wind and rain 
+    - Rainfall
+        - Rain guage locations with respect to model
+        - Timeseries plots of graphs
+        - Rainfall event summaries and clustering (probabilities) (peak, volume, intensity and rainfall)
+    - Wind
+        - Wind stations with to model
+        - Windrose 
+        - Probabilities
+- Ensemble configuration with
+- Chama configuration 
+- Chama output visualization
