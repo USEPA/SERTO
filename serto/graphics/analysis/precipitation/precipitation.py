@@ -61,6 +61,7 @@ class PrecipitationVisualization:
             rain_gauge_names: List[str] = None,
             event_plot_attributes: List[str] = None,
             event_plot_attribute_labels: List[str] = None,
+            color_scale: str = 'Plotly',
             plot_clusters: bool = False,
             *args, **kwargs
     ) -> List[Tuple[go.Figure, Union[go.Figure, None]]]:
@@ -70,11 +71,19 @@ class PrecipitationVisualization:
         :param rain_gauge_names:  List of rain gauge names
         :param event_plot_attributes:  List of event plot attributes
         :param event_plot_attribute_labels:  List of event plot attribute labels
-        :param plot_clusters:
+        :param color_scale: Color scale for the scatter matrix plot (default: Viridis)
+        :param plot_clusters: Plot clusters if available in the events DataFrame (default: False)
         :return:
         """
 
         local_events = events.copy()
+
+        quad_colors = px.colors.qualitative.Plotly
+
+        if hasattr(px.colors.qualitative, color_scale):
+            quad_colors = getattr(px.colors.qualitative, color_scale)
+        else:
+            quad_colors = getattr(px.colors.sequential, color_scale)
 
         figures: List[Tuple[go.Figure, Union[go.Figure, None]]] = []
 
@@ -90,9 +99,9 @@ class PrecipitationVisualization:
                     raise ValueError('No event plot attributes found in the events DataFrame')
                 else:
                     if 'cluster' in local_events.columns and plot_clusters:
-                        plot_events = local_events[[*event_plot_attributes, 'cluster']]
+                        plot_events = local_events[['name', *event_plot_attributes, 'cluster']]
                     else:
-                        plot_events = local_events[event_plot_attributes]
+                        plot_events = local_events[['name', *event_plot_attributes]]
 
                     if event_plot_attribute_labels is not None:
                         if len(event_plot_attributes) == len(event_plot_attribute_labels):
@@ -112,7 +121,9 @@ class PrecipitationVisualization:
                         dimensions=event_plot_attributes,
                         color='cluster' if 'cluster' in plot_events.columns and plot_clusters else None,
                         category_orders=category_orders,
-                        color_discrete_sequence=px.colors.qualitative.Plotly,
+                        hover_name='name',
+                        hover_data=event_plot_attributes,
+                        color_discrete_sequence=quad_colors,
                         title=f'Rainfall Events for Gauge: {rain_gauge_name}'
                     )
 
@@ -134,6 +145,9 @@ class PrecipitationVisualization:
                                     boxpoints='all',
                                     notched=True,
                                     showwhiskers=True,
+                                    line=dict(
+                                        color=quad_colors[f % len(quad_colors)]
+                                    ),
                                 )
                             )
 
@@ -159,9 +173,9 @@ class PrecipitationVisualization:
         else:
 
             if 'cluster' in local_events.columns and plot_clusters:
-                plot_events = local_events[[*event_plot_attributes, 'cluster']]
+                plot_events = local_events[['name', *event_plot_attributes, 'cluster']]
             else:
-                plot_events = local_events[event_plot_attributes]
+                plot_events = local_events[['name', *event_plot_attributes]]
 
             if event_plot_attribute_labels is not None:
                 if len(event_plot_attributes) == len(event_plot_attribute_labels):
@@ -182,6 +196,9 @@ class PrecipitationVisualization:
                 dimensions=event_plot_attributes,
                 color='cluster' if 'cluster' in plot_events.columns and plot_clusters else None,
                 title=f'Rainfall Events',
+                hover_name='name',
+                hover_data=event_plot_attributes,
+                color_discrete_sequence=quad_colors,
             )
 
             fig.update_traces(diagonal_visible=False)
@@ -204,6 +221,9 @@ class PrecipitationVisualization:
                             boxpoints='all',
                             notched=True,
                             showwhiskers=True,
+                            line=dict(
+                                color=quad_colors[f % len(quad_colors)]
+                            ),
                         )
                     )
 
@@ -287,6 +307,7 @@ class PrecipitationVisualization:
                                 customdata=cluster_events.values,
                                 name=f'Cluster {cluster}',
                                 showlegend=True,
+                                legendgroup=f'EventCluster'
                             )
                         )
                 else:
@@ -302,6 +323,7 @@ class PrecipitationVisualization:
                             customdata=events.values,
                             name=event_plot_attribute,
                             showlegend=True,
+                            legendgroup=f'EventCluster'
                         )
                     )
 
@@ -312,7 +334,7 @@ class PrecipitationVisualization:
 
             range_breaks = [
                 dict(
-                    bounds=[row.actual_end, row.actual_end + row.post_event_time],
+                    bounds=[row.actual_end - pd.Timedelta(hours=1), row.actual_end + row.post_event_time],
                 )
                 for index, row in events.iterrows()
             ]

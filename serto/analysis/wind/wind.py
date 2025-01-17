@@ -62,6 +62,8 @@ class WindAnalysisData(IDictable):
         :return: The dictionary
         """
 
+        data = None
+
         if isinstance(self._data, pd.DataFrame):
             data = self._model_data.to_dict()
         elif isinstance(self._data, np.ndarray):
@@ -119,6 +121,7 @@ class WindAnalysis(IDictable):
             self,
             wind_data: WindAnalysisData,
             sampling_approach: Optional[SamplingApproach] = SamplingApproach.RANDOM,
+            num_components: int = 6,
             *args,
             **kwargs,
     ) -> None:
@@ -132,6 +135,7 @@ class WindAnalysis(IDictable):
         """
         self.sampling_approach = sampling_approach
         self.wind_data = wind_data
+        self.num_components = num_components
         self.model_args = args
         self.model_kwargs = kwargs
         self.model = None

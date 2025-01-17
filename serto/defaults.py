@@ -2,7 +2,7 @@
 import json
 import os.path
 from abc import abstractmethod, ABC
-from typing import Callable, Any
+from typing import Callable, Any, Dict
 
 # third-party imports
 import numpy as np
@@ -95,7 +95,7 @@ class IDictable(ABC):
 
     @classmethod
     @abstractmethod
-    def from_dict(cls, data: dict, base_directory: str = None) -> 'IDictable':
+    def from_dict(cls, data: Dict[Any, Any], base_directory: str = None) -> 'IDictable':
         """
         Create an object from a dictionary representation
         :param data: The dictionary

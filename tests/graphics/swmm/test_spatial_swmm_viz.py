@@ -6,7 +6,7 @@ import unittest
 # project imports
 from serto.swmm import SpatialSWMM
 from serto.graphics.swmm import SpatialSWMMVisualization
-from tests.spatialswmm.swmm import EXAMPLE_SWMM_TEST_MODEL_A
+from ...spatialswmm.swmm import EXAMPLE_SWMM_TEST_MODEL_A
 
 
 class TestSpatialSWMMVizualization(unittest.TestCase):

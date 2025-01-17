@@ -1,4 +1,5 @@
 # python imports
+import os
 from typing import List, Dict, Any, TypeVar, Tuple
 
 import pandas as pd
@@ -13,11 +14,13 @@ import contextily as ctx
 import matplotlib.pyplot as plt
 
 # project imports
+from ... import IDictable
 from ...swmm import SpatialSWMM
 
 T = TypeVar("T", bound="MyClass")
 
-class SpatialSWMMVisualization():
+
+class SpatialSWMMVisualization(IDictable):
     def __init__(self, inp: str, crs: str, output: str, *args, **kwargs):
         """
         Initialize the spatial swmm visualization object
@@ -30,6 +33,7 @@ class SpatialSWMMVisualization():
         self.inp = inp
         self.crs = crs
         self.output = output
+
     def plot(self):
         """
         Generate the spatial swmm model
@@ -42,9 +46,9 @@ class SpatialSWMMVisualization():
 
             fig = go.Figure()
 
-            catchment_traces = plot_swmm_catchments_plotly(swmm_spatial_model)
-            link_traces = plot_swmm_links_plotly(swmm_spatial_model)
-            node_traces = plot_swmm_nodes_plotly(swmm_spatial_model)
+            catchment_traces = SpatialSWMMVisualization.plot_catchments_plotly(swmm_spatial_model)
+            link_traces = SpatialSWMMVisualization.plot_links_plotly(swmm_spatial_model)
+            node_traces = SpatialSWMMVisualization.plot_nodes_plotly(swmm_spatial_model)
 
             for catchment_trace in catchment_traces:
                 fig.add_trace(catchment_trace)
@@ -140,25 +144,43 @@ class SpatialSWMMVisualization():
             ctx.add_basemap(ax, source=ctx.providers.CartoDB.Positron, crs=swmm_spatial_model._crs)
             plt.savefig(self.output)
 
-
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, base_directory: str = None) -> dict:
         """
         Export the spatial swmm visualization object to a dictionary
         :return:
         """
+        inp = self.inp
+        output = self.output
+        
+        if base_directory is not None:
+            if os.path.isabs(inp):
+                inp = os.path.relpath(inp, base_directory)
+            
+            if os.path.isabs(output):
+                output = os.path.relpath(output, base_directory)
+
+            
+
         return {
-            'inp': self.inp,
+            'inp': input,
             'crs': self.crs,
-            'output': self.output
+            'output': output
         }
 
-    def from_dict(self, data: Dict[str, Any]) -> T:
+    @classmethod
+    def from_dict(cls, data: Dict[Any, Any], base_directory: str = None) -> 'SpatialSWMMVisualization':
         """
         Import the spatial swmm visualization object from a dictionary
         :param data: Dictionary containing the spatial swmm visualization object
         :return: SpatialSWMMViz object
         """
-        spatial_swmm_viz = SpatialSWMMViz(**data)
+        if base_directory is not None:
+            if 'inp' in data and not os.path.isabs(data['inp']):
+                data['inp'] = os.path.join(base_directory, data['inp'])
+            if 'output' in data and not os.path.isabs(data['output']):
+                data['output'] = os.path.join(base_directory, data['output'])
+
+        spatial_swmm_viz = SpatialSWMMVisualization(**data)
         return  spatial_swmm_viz
 
     @staticmethod
@@ -247,7 +269,6 @@ class SpatialSWMMVisualization():
                 }
 
         nodes_to_geo_crs = pd.DataFrame(nodes_to_geo_crs.drop(columns='geometry'))
-
         junctions = nodes_to_geo_crs[nodes_to_geo_crs['NodeType'] == 'JUNCTIONS']
         outfalls = nodes_to_geo_crs[nodes_to_geo_crs['NodeType'] == 'OUTFALLS']
         dividers = nodes_to_geo_crs[nodes_to_geo_crs['NodeType'] == 'DIVIDER']
@@ -263,11 +284,11 @@ class SpatialSWMMVisualization():
                     mode='markers',
                     marker=marker_symbols['JUNCTIONS'],
                     hovertemplate='<br>'.join([
-                        f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(junctions.columns)
+                        f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(junctions.columns[:10])
                     ]),
 
                     text=junctions['Name'],
-                    customdata=junctions.values,
+                    customdata=junctions.values[:, :10],
                 )
             )
 
@@ -281,10 +302,10 @@ class SpatialSWMMVisualization():
                     mode='markers',
                     marker=marker_symbols['OUTFALLS'],
                     hovertemplate='<br>'.join([
-                        f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(outfalls.columns)
+                        f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(outfalls.columns[:5])
                     ]),
                     text=outfalls['Name'],
-                    customdata=outfalls.values,
+                    customdata=outfalls.values[:, 5],
                 )
             )
 
@@ -298,10 +319,10 @@ class SpatialSWMMVisualization():
                     mode='markers',
                     marker=marker_symbols['DIVIDER'],
                     hovertemplate='<br>'.join([
-                        f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(dividers.columns)
+                        f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(dividers.columns[:10])
                     ]),
                     text=dividers['Name'],
-                    customdata=dividers.values,
+                    customdata=dividers.values[:,:10],
                 )
             )
 
@@ -315,10 +336,10 @@ class SpatialSWMMVisualization():
                     mode='markers',
                     marker=marker_symbols['STORAGE'],
                     hovertemplate='<br>'.join([
-                        f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(storage.columns)
+                        f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(storage.columns[:10])
                     ]),
                     text=storage['Name'],
-                    customdata=storage.values,
+                    customdata=storage.values[:,:10],
                 )
             )
 
@@ -357,10 +378,10 @@ class SpatialSWMMVisualization():
                     z=[1] * len(subcatchments_to_geo_crs),
                     colorscale=[[0, 'salmon'], [1, 'salmon']],
                     hovertemplate='<br>'.join([
-                        f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(subcatchments_to_geo_crs_data.columns)
+                        f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(subcatchments_to_geo_crs_data.columns[:10])
                     ]),
                     text=subcatchments_to_geo_crs['Name'],
-                    customdata=subcatchments_to_geo_crs_data.values,
+                    customdata=subcatchments_to_geo_crs_data.values[:,:10],
                     showscale=False,
                     showlegend=True,
                     marker=dict(
@@ -412,10 +433,10 @@ class SpatialSWMMVisualization():
                             width=2
                         ),
                         hovertemplate='<br>'.join([
-                            f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(conduits_data.columns)
+                            f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(conduits_data.columns[:10])
                         ]),
                         text=row['Name'],
-                        customdata=conduits_data.loc[index].values[None,:],
+                        customdata=conduits_data.loc[index].values[:10],
                         showlegend=first,
                         legendgroup='Conduits',
                         visible=first,
@@ -438,10 +459,10 @@ class SpatialSWMMVisualization():
                             width=4
                         ),
                         hovertemplate='<br>'.join([
-                            f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(orifices_data.columns)
+                            f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(orifices_data.columns[:10])
                         ]),
                         text=row['Name'],
-                        customdata=orifices_data.loc[index].values[None,:],
+                        customdata=orifices_data.loc[index].values[:10],
                         showlegend=first,
                         legendgroup='Orifices'
                     )
@@ -463,10 +484,10 @@ class SpatialSWMMVisualization():
                             width=4.5
                         ),
                         hovertemplate='<br>'.join([
-                            f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(weirs_data.columns)
+                            f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(weirs_data.columns[:10])
                         ]),
                         text=row['Name'],
-                        customdata=weirs_data.loc[index].values[None,:],
+                        customdata=weirs_data.loc[index].values[:10],
                         showlegend=first,
                         legendgroup='Weirs'
                     )
@@ -488,10 +509,10 @@ class SpatialSWMMVisualization():
                             width=5
                         ),
                         hovertemplate='<br>'.join([
-                            f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(outlets_data.columns)
+                            f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in enumerate(outlets_data.columns[:10])
                         ]),
                         text=row['Name'],
-                        customdata=outlets_data.loc[index].values[None,:],
+                        customdata=outlets_data.loc[index].values[:10],
                         showlegend=first,
                         legendgroup='Outlets'
                     )

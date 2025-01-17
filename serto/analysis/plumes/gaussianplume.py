@@ -35,9 +35,9 @@ class GaussianPlume(IDictable):
     def __init__(
             self,
             source_strength: float,
-            source_location: Tuple[float, float],
+            source_location: List[float],
             wind_direction: float,
-            standard_deviation: Tuple[float, float] = None,
+            standard_deviation: List[float] = None,
             wind_speed: float = 10.0,
             turbulent_intensity: float = 0.25,
             *args,
@@ -193,7 +193,11 @@ class GaussianPlume(IDictable):
         x_pts = np.arange(x_min + half_resolution, x_max, resolution)
         y_pts = np.arange(y_min + half_resolution, y_max, resolution)
 
+        x_pts_index = np.arange(x_pts.shape[0])
+        y_pts_index = np.arange(y_pts.shape[0])
+
         x_pts, y_pts = np.meshgrid(x_pts, y_pts)
+        x_pts_index, y_pts_index = np.meshgrid(x_pts_index, y_pts_index)
 
         locations = np.array([x_pts, y_pts]).T.reshape(-1, 2)
         concentrations = self.concentration(locations)
@@ -210,6 +214,10 @@ class GaussianPlume(IDictable):
                     for x, y in locations
                 ],
                 "concentration": concentrations.flatten(),
+                "row_index": x_pts_index.flatten(),
+                "col_index": y_pts_index.flatten(),
+                # concatenate y and x indexes as string
+                'label': [f'{y}_{x}' for x, y in zip(x_pts_index.flatten(), y_pts_index.flatten())]
             },
             crs=crs
         )
@@ -217,6 +225,40 @@ class GaussianPlume(IDictable):
         # concentration_polygons.set_crs(crs, inplace=True)
 
         return concentration_polygons
+
+    def area_weighted_buildup(
+            self, sub_catchment: gpd.GeoDataFrame,
+            buildup_field: str = "CalculatedBuildup",
+            mesh_resolution: float = 100.0
+    ) -> gpd.GeoDataFrame:
+        """
+        This function calculates the area weighted buildup
+        :param sub_catchment: The sub-catchment
+        :param concentration_field: The concentration field
+        :param buildup_field: The buildup field
+        :param mesh_resolution: The mesh resolution
+        """
+
+        processed_concentrations = sub_catchment.copy()
+        processed_concentrations['name'] = processed_concentrations.index
+        processed_concentrations['computed_area'] = processed_concentrations.area
+
+        subcatchments_bounds = sub_catchment.total_bounds
+        concentration_polygons = self.concentrations_polygon(
+            x_min=subcatchments_bounds[0],
+            y_min=subcatchments_bounds[1],
+            x_max=subcatchments_bounds[2],
+            y_max=subcatchments_bounds[3],
+            resolution=mesh_resolution,
+            crs=sub_catchment.crs
+        )
+
+        overlayed = gpd.overlay(processed_concentrations, concentration_polygons, how='intersection')
+
+
+        return processed_concentrations, concentration_polygons
+
+
 
     def to_dict(self, base_directory: str = None) -> dict:
         """
@@ -236,7 +278,7 @@ class GaussianPlume(IDictable):
         }
 
     @staticmethod
-    def from_dict(cls, data: dict, base_directory: str = None) -> GaussianPlume:
+    def from_dict(cls, data: dict, base_directory: str = None) -> 'GaussianPlume':
         """
         This function initializes the plume object from a JSON object
         :param arguments: The JSON object

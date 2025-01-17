@@ -23,7 +23,13 @@ class TestWindVisualization(unittest.TestCase):
             parse_dates=["TimeEST"]
         )
 
-    def test_polar(self):
+        self.wind_data = self.wind_data.drop(columns=['station', 'station_name'])
+
+        # remove duplicate indexes and sort
+        self.wind_data = self.wind_data[~self.wind_data.index.duplicated(keep='first')]
+        self.wind_data = self.wind_data.sort_index()
+
+    def test_wind_polar_plots(self):
         """
         Test the plot_model function
         :return:
@@ -50,41 +56,21 @@ class TestWindVisualization(unittest.TestCase):
         )
         plotly.offline.plot(fig, filename='test_wind_rose_scatter_polar.html')
 
-    def test_plot_probabilities(self):
+    def test_wind_statistics_plot(self):
         """
         Test the plot_model function
         :return:
         """
 
-        cluster_columns = ['precip_total', 'precip_peak', 'duration_hours']
-
-        events = PrecipitationAnalysis.get_events(
-            rainfall=self.rainfall_data,
-            inter_event_time=pd.Timedelta(days=1),
-            floor=1.0E-13
+        wind_clustering_model = WindAnalysis.joint_speed_direction_gmm_model(
+            wind_data=self.wind_data,
+            n_components=12
         )
 
-        events = PrecipitationAnalysis.get_noaa_event_return_periods(
-            events=events,
-            latitude=39.049774180652236,
-            longitude=-84.66127045790225,
-            series='ams'
+        probability_plots = WindVisualization.plot_wind_likelihood(
+            wind_data=self.wind_data,
+            model=wind_clustering_model,
         )
 
-        events['duration_hours'] = events['duration'] / pd.Timedelta(hours=1)
-
-        events, cluster_model = PrecipitationAnalysis.cluster_events(
-            events=events,
-            cluster_columns=cluster_columns,
-            number_of_clusters=6,
-        )
-
-        figs = PrecipitationVisualization.plot_events(
-            events=events,
-            plot_clusters=True,
-            event_plot_attributes=cluster_columns,
-            event_plot_attribute_labels=['Total Precipitation (in)', 'Peak Intensity (in/hr)', 'Duration (hours)']
-        )
-
-        plotly.offline.plot(figs[0][0], filename='test_rainfall_event_plotting.html')
-        plotly.offline.plot(figs[0][1], filename='test_rainfall_event_distribution_plotting.html')
+        fig = go.Figure(probability_plots)
+        plotly.offline.plot(fig, filename='test_wind_statistics_plot.html')

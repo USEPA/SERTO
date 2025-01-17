@@ -16,7 +16,11 @@ import contextily as ctx
 import matplotlib.pyplot as plt
 
 # project imports
-from ...swmm import SpatialSWMM
+from serto.swmm import SpatialSWMM
+from serto.swmm import plot_swmm_catchments_plotly
+from serto.analysis.wind import WindAnalysis
+from serto.graphics.analysis.wind import WindVisualization
+
 from ...analysis.plumes import GaussianPlume, PlumeEventMatrix
 
 class GaussianPlumeVisualization:
@@ -30,9 +34,10 @@ class GaussianPlumeVisualization:
 
     @staticmethod
     def plot_plume_event(
+            swmm_model: SpatialSWMM,
+            wind_analysis: WindAnalysis,
             plume: GaussianPlume,
-
-    ):
+    ) -> go.Figure:
         pass
 class PlumeEventMatrixVisualization:
     """
