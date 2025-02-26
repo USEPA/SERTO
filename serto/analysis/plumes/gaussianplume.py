@@ -10,7 +10,6 @@ import math
 
 # third-party imports
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 from numpy.typing import NDArray
 import geopandas as gpd
@@ -35,9 +34,10 @@ class GaussianPlume(IDictable):
     def __init__(
             self,
             source_strength: float,
-            source_location: List[float],
+            source_location: Tuple[float, float],
             wind_direction: float,
-            standard_deviation: List[float] = None,
+            standard_deviation: Tuple[float, float] = None,
+            exponential_decay: float = 0.01,
             wind_speed: float = 10.0,
             turbulent_intensity: float = 0.25,
             *args,
@@ -57,6 +57,7 @@ class GaussianPlume(IDictable):
           from the x-axis
         :param standard_deviation: An array of the form [downwind, crosswind]
           specifying the extent of the plume
+        :param exponential_decay: Exponential decay factor
         :param wind_speed : Wind speed in m/s
         :param turbulent_intensity : Lateral turbulent intensity in m/s
         """
@@ -68,13 +69,15 @@ class GaussianPlume(IDictable):
         self.turbulent_intensity = turbulent_intensity
 
         self.standard_deviation = standard_deviation
+        self.exponential_decay = exponential_decay
 
         self._direction_vector = np.squeeze(np.array([
             math.cos(math.radians(self.wind_direction)),
             math.sin(math.radians(self.wind_direction))
         ]))
 
-        self._plume_type = self.PlumeType.PHYSICS_BASED if self.standard_deviation is None else self.PlumeType.EMPIRICAL
+        self._plume_type = self.PlumeType.PHYSICS_BASED \
+            if self.standard_deviation is None else self.PlumeType.EMPIRICAL
 
     @property
     def plume_type(self):
@@ -110,10 +113,12 @@ class GaussianPlume(IDictable):
         d = np.dot(downwind, self._direction_vector)
 
         concentration = np.zeros(locations.shape[0])
-        concentration[d < 0.0] = 0.0
 
-        downwind_v = downwind[d >= 0]
-        crosswind_v = crosswind[d >= 0]
+        valid_mesh_filter = d >= 0.0
+        concentration[~valid_mesh_filter] = 0.0
+
+        downwind_v = downwind[valid_mesh_filter]
+        crosswind_v = crosswind[valid_mesh_filter]
 
         downwind_norm = np.linalg.norm(downwind_v, axis=1)
         crosswind_norm = np.linalg.norm(crosswind_v, axis=1)
@@ -132,13 +137,12 @@ class GaussianPlume(IDictable):
             )
 
         else:
-            downstream_weight = 1.0
-            crosswind_weight = downwind_norm / self.standard_deviation[0]
-
-            downwind_standard_dev = self.standard_deviation[0] * downstream_weight
-            crosswind_standard_dev = self.standard_deviation[1] * crosswind_weight
-
+            downwind_standard_dev  = self.standard_deviation[0]
+            crosswind_standard_dev = self.standard_deviation[1] * downwind_norm / self.standard_deviation[0]
             source_strength = self.source_strength
+
+        # downwind_standard_dev  = self.standard_deviation[0] *  (1 - np.exp(-self.exponential_decay * downwind_norm))
+        # crosswind_standard_dev = self.standard_deviation[1] *  (1 - np.exp(-self.exponential_decay * downwind_norm))
 
         valid_concentrations = source_strength * np.exp(
             -0.5 * (crosswind_norm / crosswind_standard_dev) ** 2.0
@@ -146,8 +150,42 @@ class GaussianPlume(IDictable):
             -0.5 * (downwind_norm / downwind_standard_dev) ** 2.0
         )
 
-        concentration[d >= 0] = valid_concentrations
-        # concentration[distances <= 1.0E-20] = self.source_strength
+        concentration[valid_mesh_filter] = valid_concentrations
+        # concentration[distances <= 0.0] = self.source_strength
+
+        # import matplotlib
+        # matplotlib.use('TkAgg')
+        #
+        # from matplotlib import pyplot as plt
+        #
+        # fig, ax = plt.subplots(2,2)
+        # mesh_grid_concs = concentration.reshape((1000, 1000))
+        #
+        # x = np.arange(
+        #     start=-5000,
+        #     stop=5000,
+        #     step=10
+        # )
+        #
+        # y = np.arange(
+        #     start=-5000,
+        #     stop=5000,
+        #     step=10
+        # )
+        #
+        # cb = ax[0, 0].contourf(x, y, mesh_grid_concs)
+        # fig.colorbar(cb, label="Concentration (Picocuries)")
+        #
+        # concentration[d > 0] = downwind_standard_dev
+        # cb = ax[0, 1].contourf(x, y, concentration.reshape((1000, 1000)))
+        # fig.colorbar(cb, label="Downwind (Picocuries)")
+        #
+        # concentration[d > 0] = crosswind_standard_dev
+        # cb = ax[1,1].contourf(x, y, concentration.reshape((1000, 1000)))
+        # fig.colorbar(cb, label="Crosswind (Picocuries)")
+        #
+        # matplotlib.use('TkAgg')
+        # plt.show()
 
         return concentration
 
@@ -166,7 +204,7 @@ class GaussianPlume(IDictable):
 
         return a1, a2, d
 
-    def concentrations_polygon(
+    def plume_mesh(
             self,
             x_min:float ,
             x_max:float ,
@@ -174,7 +212,8 @@ class GaussianPlume(IDictable):
             y_max:float ,
             resolution:float,
             crs: str,
-            concentration_field_name: str = "Concentration"
+            mass_loading_field: str = "Concentration",
+            mass_loadinf_flux_field: str = "Concentration (Mass/Area)"
     ) -> gpd.GeoDataFrame:
         """
         This function returns the concentrations for each point in a square polygon
@@ -185,7 +224,8 @@ class GaussianPlume(IDictable):
         :param y_max: The maximum y location of the domain
         :param resolution: The resolution of the grid
         :param crs: The coordinate reference system of the grid
-        :param concentration_field_name: The name of the concentration field in the GeoDataFrame
+        :param mass_loading_field: The name of the mass field in the GeoDataFrame
+        :param mass_loadinf_flux_field: The name of the mass per unit area field in the GeoDataFrame
         :return: A GeoDataFrame with the concentration field
         """
 
@@ -199,64 +239,95 @@ class GaussianPlume(IDictable):
         x_pts, y_pts = np.meshgrid(x_pts, y_pts)
         x_pts_index, y_pts_index = np.meshgrid(x_pts_index, y_pts_index)
 
-        locations = np.array([x_pts, y_pts]).T.reshape(-1, 2)
+        locations = np.array([x_pts.ravel(), y_pts.ravel()]).T
         concentrations = self.concentration(locations)
 
         concentration_polygons = gpd.GeoDataFrame(
             {
                 "geometry":  [
                     Polygon([
-                        (x - half_resolution , y - half_resolution),
+                        (x - half_resolution, y - half_resolution),
                         (x + half_resolution, y - half_resolution),
                         (x + half_resolution, y + half_resolution),
                         (x - half_resolution, y + half_resolution)
                     ])
                     for x, y in locations
                 ],
-                "concentration": concentrations.flatten(),
+                mass_loading_field: concentrations.flatten(),
                 "row_index": x_pts_index.flatten(),
                 "col_index": y_pts_index.flatten(),
-                # concatenate y and x indexes as string
                 'label': [f'{y}_{x}' for x, y in zip(x_pts_index.flatten(), y_pts_index.flatten())]
             },
             crs=crs
         )
 
-        # concentration_polygons.set_crs(crs, inplace=True)
+        concentration_polygons[mass_loadinf_flux_field] = \
+            concentration_polygons[mass_loading_field] / concentration_polygons.area
 
         return concentration_polygons
 
     def area_weighted_buildup(
             self, sub_catchment: gpd.GeoDataFrame,
-            buildup_field: str = "CalculatedBuildup",
-            mesh_resolution: float = 100.0
-    ) -> gpd.GeoDataFrame:
+            mesh_resolution: float = 100.0,
+            mass_loading_field: str = "Concentration",
+            mass_loadinf_flux_field: str = "Concentration (Mass/Area)"
+    ) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
         """
         This function calculates the area weighted buildup
         :param sub_catchment: The sub-catchment
         :param concentration_field: The concentration field
         :param buildup_field: The buildup field
         :param mesh_resolution: The mesh resolution
+        :returns
         """
 
-        processed_concentrations = sub_catchment.copy()
-        processed_concentrations['name'] = processed_concentrations.index
-        processed_concentrations['computed_area'] = processed_concentrations.area
+        subcatchment_fluxes = sub_catchment.copy()
+        subcatchment_fluxes['name'] = subcatchment_fluxes.index
+        subcatchment_fluxes['computed_area'] = subcatchment_fluxes.area
+        subcatchment_fluxes[mass_loading_field] = 0.0
+        subcatchment_fluxes[mass_loadinf_flux_field] = 0.0
 
         subcatchments_bounds = sub_catchment.total_bounds
-        concentration_polygons = self.concentrations_polygon(
+        concentration_mesh = self.plume_mesh(
             x_min=subcatchments_bounds[0],
             y_min=subcatchments_bounds[1],
             x_max=subcatchments_bounds[2],
             y_max=subcatchments_bounds[3],
             resolution=mesh_resolution,
-            crs=sub_catchment.crs
+            crs=sub_catchment.crs,
+            mass_loading_field=mass_loading_field,
+            mass_loadinf_flux_field=mass_loadinf_flux_field
         )
 
-        overlayed = gpd.overlay(processed_concentrations, concentration_polygons, how='intersection')
+        temp_name = f'{mass_loading_field}_p'
+        temp_name_f = f'{mass_loadinf_flux_field}_p'
+
+        concentration_mesh.rename(columns={
+            mass_loading_field: temp_name,
+            f'{mass_loading_field} (Mass/Area)': temp_name_f
+        }, inplace=True)
+
+        concentration_mesh['mesh_computed_area'] = concentration_mesh.area
+
+        overlayed = gpd.overlay(concentration_mesh, subcatchment_fluxes, keep_geom_type=True, how='union')
+        overlayed['overlayed_computed_area'] = overlayed.area
+
+        for group_id, group_cells in overlayed.groupby('name'):
+            total_mass = group_cells['overlayed_computed_area'] * group_cells[temp_name] / group_cells["mesh_computed_area"]
+            subcatchment_fluxes.loc[group_id, mass_loading_field] = total_mass.sum()
+            subcatchment_fluxes.loc[group_id, mass_loadinf_flux_field] = \
+                total_mass.sum() /subcatchment_fluxes.loc[group_id, 'computed_area']
 
 
-        return processed_concentrations, concentration_polygons
+        concentration_mesh.rename(
+            columns={
+                temp_name: mass_loading_field,
+                temp_name_f:  mass_loadinf_flux_field
+            },
+            inplace=True
+        )
+
+        return subcatchment_fluxes, concentration_mesh
 
 
 

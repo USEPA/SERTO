@@ -67,71 +67,16 @@ def configure_subparsers(graphics_subparsers: argparse.ArgumentParser):
     )
 
 
-def config_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-    """
-    Decorator to parse configuration files
-    :param func:
-    :return:  wrapper function
-    """
-
-    def wrapper(*args, **kwargs):
-        """
-        Wrapper function to parse configuration files and update kwargs with the parsed values
-        :param args:
-        :param kwargs:
-        :return:
-        """
-
-        if 'config' in kwargs:
-            # check if yaml or json and parse into kwargs
-
-            config_file = kwargs['config']
-
-            if not config_file is None:
-                if config_file.endswith('.json'):
-                    import json
-                    with open(config_file, 'r') as f:
-                        config = json.load(f)
-                elif config_file.endswith('.yaml') or config_file.endswith('.yml'):
-                    import yaml
-                    with open(config_file, 'r') as f:
-                        config = yaml.load(f, Loader=yaml.Loader)
-                else:
-                    raise ValueError(f'Unknown file type for config file: {config_file}')
-
-                kwargs.update(config)
-                del kwargs['config']
-
-                if 'inp' in kwargs:
-                    inp_file = kwargs['inp']
-                    if not os.path.isabs(inp_file):
-                        inp_file = os.path.join(os.path.dirname(config_file), inp_file)
-                        kwargs['inp'] = inp_file
-                    if not os.path.exists(inp_file):
-                        raise ValueError(f'Input file does not exist: {inp_file}')
-
-                if 'output' in kwargs:
-                    output_file = kwargs['output']
-                    if not os.path.isabs(output_file):
-                        output_file = os.path.join(os.path.dirname(config_file), output_file)
-                        kwargs['output'] = output_file
-
-        return func(*args, **kwargs)
-
-    return wrapper
-
-
-@config_decorator
 def main(inp: str = None, crs: str = None, output: str = None, graphics_command="swmm", *args, **kwargs):
     """
     Main function for the command line interface for the graphics module for SWMM visualization
     :return: None
     """
     if graphics_command == 'swmm':
-        swmm = SpatialSWMMViz(inp=inp, crs=crs, output=output)
+        swmm = SpatialSWMMVisualization(inp=inp, crs=crs, output=output)
         swmm.plot()
     elif graphics_command == 'swmm_config':
-        swmm_viz = SpatialSWMMViz(
+        swmm_viz = SpatialSWMMVisualization(
             inp='<SWMM model file>',
             crs='<Coordinate reference system (CRS) for the model>',
             output='<Output file path for the visualization with options [*.png, *.pdf, *.svg, *.html for plotly]>'

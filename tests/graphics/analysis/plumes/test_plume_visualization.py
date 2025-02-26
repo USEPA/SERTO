@@ -1,4 +1,5 @@
 # python imports
+import math
 import unittest
 
 # 3rd party imports
@@ -48,6 +49,10 @@ class TestPlumeVisualization(unittest.TestCase):
 
         nodes_centroid = self.model.nodes.dissolve().centroid
         nodes_centroid_wgs = nodes_centroid.to_crs('EPSG:4326')
+
+        easting = nodes_centroid.geometry.x[0]
+        northing = nodes_centroid.geometry.y[0]
+
         lon = nodes_centroid_wgs.geometry.x[0]
         lat = nodes_centroid_wgs.geometry.y[0]
 
@@ -59,25 +64,58 @@ class TestPlumeVisualization(unittest.TestCase):
             raxis_mode='fraction',
         )
 
-        plume = GaussianPlume(
-            source_strength=10000000,
-            source_location= [
-                nodes_centroid.geometry.x[0],
-                nodes_centroid.geometry.y[0],
-            ],
+        plume1 = GaussianPlume(
+            source_strength=50 * 10 ** 6 / 100,
+            source_location=(
+                easting - 5000,
+                northing - 2500,
+            ),
             wind_speed=10,
             wind_direction=202.5,
-            standard_deviation=[5000, 500]
+            standard_deviation=(5000, 1000)
         )
 
-        subcatchments_bounds = self.model.subcatchments.total_bounds
+        plume2 = GaussianPlume(
+            source_strength=180 * 10 ** 6 / (4.0 * 100.0),
+            source_location=(
+                easting + 4000,
+                northing + 1200,
+            ),
+            wind_speed=10,
+            wind_direction=270,
+            standard_deviation=(4000, 2000)
+        )
 
-        subcatchment_with_buildup, get_subcatchment_plum = plume.area_weighted_buildup(
+        conc_label = "Cesium-137 (Micro Curies)"
+        conc_label_flux = f"Cesium-137 (Micro Curies/ft^2)"
+
+        plume1_sub, plum1 = plume1.area_weighted_buildup(
+            mesh_resolution=100,
             sub_catchment=self.model.subcatchments,
+            mass_loading_field=conc_label,
+            mass_loadinf_flux_field=conc_label_flux
         )
 
-        get_subcatchment_plum = get_subcatchment_plum.to_crs('EPSG:4326')
-        valid_concentrations = get_subcatchment_plum[get_subcatchment_plum['concentration'] > 1.0e-3]
+        plume2_sub, plum2 = plume2.area_weighted_buildup(
+            mesh_resolution=100,
+            sub_catchment=self.model.subcatchments,
+            mass_loading_field=conc_label,
+            mass_loadinf_flux_field = conc_label_flux
+        )
+
+        min_flux = 0.5
+        plum1 = plum1.to_crs('EPSG:4326')
+        plume1_sub = plume1_sub.to_crs('EPSG:4326')
+        plume1_valid = plum1[plum1[conc_label_flux] > min_flux]
+
+        plum2 = plum2.to_crs('EPSG:4326')
+        plume2_sub = plume2_sub.to_crs('EPSG:4326')
+        plume2_valid = plum2[plum2[conc_label_flux] > min_flux]
+
+        max_flux = max(
+            plume1_valid[conc_label_flux].max(),
+            plume2_valid[conc_label_flux].max(),
+        )
 
         fig = make_subplots(
             rows=2, cols=2,
@@ -86,27 +124,31 @@ class TestPlumeVisualization(unittest.TestCase):
                 [None, dict(type="map")],
             ],
             column_widths=[0.2, 0.8],
-
         )
 
         for bar in wind_rose:
             bar['legendgroup'] = 'wind_rose'
             fig.add_trace(bar, row=1, col=1)
 
-        fig.add_traces(subcatchments, rows=[2], cols=[2])
+        plume1_valid_data = pd.DataFrame(plume1_valid.drop(columns='geometry'))
 
-        plume_fig = go.Choroplethmap(
-            name='Plume',
-            geojson=valid_concentrations.__geo_interface__,
-            locations=valid_concentrations.index,
-            z=valid_concentrations['concentration'],
-            colorscale='Viridis',
+        plume1_fig = go.Choroplethmap(
+            name='Plume 1',
+            geojson=plume1_valid.__geo_interface__,
+            locations=plume1_valid.index,
+            z=plume1_valid[conc_label_flux],
+            colorscale='Jet',
             colorbar=dict(
-                title='Concentration (Picocuries)',
+                title=conc_label_flux,
                 x=0.9,
             ),
-            hoverinfo='location+z',
-
+            zmin=min_flux,
+            zmax=max_flux,
+            hovertemplate='<br>'.join([
+                f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in
+                enumerate(plume1_valid_data.columns)
+            ]),
+            customdata=plume1_valid_data.values,
             showlegend=True,
             marker=dict(
                 opacity=0.5,
@@ -115,8 +157,96 @@ class TestPlumeVisualization(unittest.TestCase):
                 )
             )
         )
+        fig.add_trace(plume1_fig, row=2, col=2)
 
-        fig.add_trace(plume_fig, row=2, col=2)
+        plume2_valid_data = pd.DataFrame(plume2_valid.drop(columns='geometry'))
+
+        plume2_fig = go.Choroplethmap(
+            name='Plume 2',
+            geojson=plume2_valid.__geo_interface__,
+            locations=plume2_valid.index,
+            z=plume2_valid[conc_label_flux],
+            colorscale='Jet',
+            colorbar=dict(
+                title=conc_label_flux,
+                x=0.9,
+            ),
+            showscale=False,
+            zmin=min_flux,
+            zmax=max_flux,
+            hovertemplate='<br>'.join([
+                f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in
+                enumerate(plume2_valid_data.columns)
+            ]),
+            text=plume2_valid_data['label'],
+            customdata=plume2_valid_data.values,
+            showlegend=True,
+            marker=dict(
+                opacity=0.5,
+                line=dict(
+                    width=0.0001
+                )
+            )
+        )
+        fig.add_trace(plume2_fig, row=2, col=2)
+
+        plume1_sub_data = pd.DataFrame(plume1_sub.drop(columns='geometry'))
+        plumes_sub1_fig = go.Choroplethmap(
+            name='Sub-catchment Flux Plume 1',
+            geojson=plume1_sub.__geo_interface__,
+            locations=plume1_sub.index,
+            z=plume1_sub[conc_label_flux],
+            colorscale='Jet',
+            colorbar=dict(
+                title=conc_label_flux,
+                x=0.9,
+            ),
+            zmin=min_flux,
+            zmax=max_flux,
+            showscale=False,
+            hovertemplate='<br>'.join([
+                f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in
+                enumerate(plume1_sub_data.columns)
+            ]),
+            customdata=plume1_sub_data.values,
+            showlegend=True,
+            marker=dict(
+                opacity=0.5,
+                line=dict(
+                    width=0.0001
+                )
+            )
+        )
+        fig.add_trace(plumes_sub1_fig, row=2, col=2)
+
+        plume2_sub_data = pd.DataFrame(plume2_sub.drop(columns='geometry'))
+        plumes_sub2_fig = go.Choroplethmap(
+            name='Sub-catchment Flux Plume 2',
+            geojson=plume2_sub.__geo_interface__,
+            locations=plume2_sub.index,
+            z=plume2_sub[conc_label_flux],
+            colorscale='Jet',
+            colorbar=dict(
+                title=conc_label_flux,
+                x=0.9,
+            ),
+            zmin=min_flux,
+            zmax=max_flux,
+            showscale=False,
+            hovertemplate='<br>'.join([
+                f'<b>{col}</b>: %{{customdata[{i}]}}' for i, col in
+                enumerate(plume2_sub_data.columns)
+            ]),
+            customdata=plume2_sub_data.values,
+            showlegend=True,
+            marker=dict(
+                opacity=0.5,
+                line=dict(
+                    width=0.0001
+                )
+            )
+        )
+        fig.add_trace(plumes_sub2_fig, row=2, col=2)
 
         fig.update_layout(
             title=f'',
@@ -130,13 +260,6 @@ class TestPlumeVisualization(unittest.TestCase):
                     y=[0.0, 1.0]
                 )
             },
-            # legend title
-
-            # colorbar=dict(
-            #     len=0.5,
-            #     y=0.5,
-            #     x=0.0
-            # ),
             legend_tracegroupgap=30,
         )
 

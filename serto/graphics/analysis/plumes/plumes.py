@@ -78,7 +78,7 @@ class PlumeEventMatrixVisualization:
 
             plume_event = plume_event_matrix.get_plume_event(event_index)
 
-            plume_event_concentrations = plume_event.concentrations_polygon(
+            plume_event_concentrations = plume_event.plume_mesh(
                 x_min=plume_event_matrix.model_bounds['min_x'],
                 x_max=plume_event_matrix.model_bounds['max_x'],
                 y_min=plume_event_matrix.model_bounds['min_y'],

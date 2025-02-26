@@ -28,6 +28,7 @@ class PrecipAnalysisData(IDictable):
     """
     This class contains the wind data to be used for wind analysis
     """
+
     class SamplingApproach:
         """
         This class defines the
@@ -38,14 +39,13 @@ class PrecipAnalysisData(IDictable):
 
     def __init__(
             self,
-            data: Union[str,pd.DataFrame] = None,
+            data: Union[str, pd.DataFrame] = None,
             precipitation_col: str = None,
-            inter_event_time: float = 24.0,
             latitude: float = 39.049774180652236,
             longitude: float = -84.66127045790225,
             atlas_14_series: str = 'ams',
             num_event_clusters: int = 6,
-            sampling_approach: int = SamplingApproach.RANDOM
+            sampling_approach: SamplingApproach = SamplingApproach.RANDOM
     ):
         """
         Constructor for the precipitation analysis data object.
@@ -77,6 +77,7 @@ class PrecipAnalysisData(IDictable):
             raise ValueError('Invalid data type')
 
         self._events = self._get_events()
+
     @property
     def data(self) -> Union[NDArray, pd.DataFrame]:
         """
@@ -122,7 +123,7 @@ class PrecipAnalysisData(IDictable):
         events = self._get_events()
 
         if self.sampling_approach == self.SamplingApproach.RANDOM:
-            index = np.random.choice(events.index, number_of_samples, replace=False, p=1.0/events['return_period'])
+            index = np.random.choice(events.index, number_of_samples, replace=False, p=1.0 / events['return_period'])
             return events.loc[index]
 
         elif (self.sampling_approach == self.SamplingApproach.GAUSSIAN_MIXTURE or
@@ -163,7 +164,6 @@ class PrecipAnalysisData(IDictable):
                 'num_event_clusters': self.num_event_clusters
             }
 
-
         return data_dict
 
     @classmethod
@@ -194,10 +194,85 @@ class PrecipAnalysisData(IDictable):
         )
 
 
-class PrecipitationAnalysis:
+class PrecipitationAnalysis(IDictable):
 
-    def __init__(self):
+    def __init__(
+            self,
+            data: Union[str, pd.DataFrame] = None,
+            precipitation_col: str = None,
+            latitude: float = 39.049774180652236,
+            longitude: float = -84.66127045790225,
+            sheet_name: str = None,
+            *args,
+            **kwargs
+    ):
+        """
+        Constructor for the precipitation analysis object class
+        :param data:
+        :param precipitation_col:
+        :param latitude:
+        :param longitude:
+        """
         pass
+
+    def to_dict(self, base_directory: str = None) -> dict:
+        """
+        Convert the object to a dictionary
+        :param base_directory: The base directory for relative paths
+        :return: The dictionary
+        """
+        if isinstance(self._data, str):
+            data_dict = {
+                'data': self._data,
+                'precipitation_col': self._precipitation_col,
+                'inter_event_time': self.inter_event_time,
+                'latitude': self.latitude,
+                'longitude': self.longitude,
+                'atlas_14_series': self.atlas_14_series,
+                'sampling_approach': self.sampling_approach,
+                'num_event_clusters': self.num_event_clusters
+
+            }
+        else:
+            data_dict = {
+                'data': self._data.to_dict(),
+                'precipitation_col': self._precipitation_col,
+                'inter_event_time': self.inter_event_time,
+                'latitude': self.latitude,
+                'longitude': self.longitude,
+                'atlas_14_series': self.atlas_14_series,
+                'sampling_approach': self.sampling_approach,
+                'num_event_clusters': self.num_event_clusters
+            }
+
+        return data_dict
+
+    @classmethod
+    def from_dict(cls, data: dict, base_directory: str = None) -> 'PrecipAnalysisData':
+        """
+        Create an object from a dictionary representation
+        :param data: The dictionary
+        :param base_directory: The base directory for relative paths
+        :return: The object
+        """
+
+        ts_data = data['data']
+
+        if isinstance(ts_data, list):
+            ts_data = np.array(ts_data)
+        elif isinstance(ts_data, dict):
+            ts_data = pd.DataFrame(ts_data)
+
+        return cls(
+            data=ts_data,
+            precipitation_col=data['precipitation_col'] if 'precipitation_col' in data else None,
+            inter_event_time=data['inter_event_time'] if 'inter_event_time' in data else 24.0,
+            latitude=data['latitude'] if 'latitude' in data else 39.049774180652236,
+            longitude=data['longitude'] if 'longitude' in data else -84.66127045790225,
+            atlas_14_series=data['atlas_14_series'] if 'atlas_14_series' in data else 'ams',
+            sampling_approach=data['sampling_approach'] if 'sampling_approach' in data else cls.SamplingApproach.RANDOM,
+            num_event_clusters=data['num_event_clusters'] if 'num_event_clusters' in data else 6
+        )
 
     @staticmethod
     def event_short_name(

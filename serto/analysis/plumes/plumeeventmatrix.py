@@ -13,9 +13,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from numpy.typing import NDArray
+import yaml
+import json
 
 # local imports
-from ... import IDictable
+from ... import IDictable, SERTODefaults
 from ...swmm import SpatialSWMM
 from . import GaussianPlume
 
@@ -251,23 +253,23 @@ class PlumeEventMatrix(IDictable):
 
         return pd.DataFrame(plume_summaries)
 
-    def to_dict(self, base_directory: str = None) -> dict:
+    def to_dict(self, base_directory: str = None, *args, **kwargs) -> dict:
         """
         Convert the object to a dictionary
         :param base_directory: The base directory for relative paths
         :return: The dictionary
         """
-        output = {}
-        output['swmm_input_file'] = self.swmm_input_file
-        output['contaminant_loading_resolution'] = {
-            'x_resolution': self.contaminant_loading_resolution[0],
-            'y_resolution': self.contaminant_loading_resolution[1]
-        }
+        output = {
+            'swmm_input_file': self.swmm_input_file,
+            'contaminant_loading_resolution': {
+                'x_resolution': self.contaminant_loading_resolution[0],
+                'y_resolution': self.contaminant_loading_resolution[1]
+            }}
 
         return output
 
     @classmethod
-    def from_dict(cls, data: dict, base_directory: str = None) -> 'PlumeEventMatrix':
+    def from_dict(cls, data: dict, base_directory: str = None, *args, **kwargs) -> 'PlumeEventMatrix':
         """
         Create an object from a dictionary representation
         :param data: The dictionary
@@ -275,3 +277,28 @@ class PlumeEventMatrix(IDictable):
         :return: The object
         """
         pass
+
+    @staticmethod
+    @SERTODefaults.extra_args()
+    def generate_plumes(**kwargs) -> None:
+        """
+        This function generates plumes
+
+        :param kwargs: The keyword arguments for the function
+        :return: A list of Gaussian plumes
+        """
+        plume_event_matrix = PlumeEventMatrix.from_dict(**kwargs)
+        output_filepath: str = kwargs.get('output', '')
+
+        if output_filepath is None or len(output_filepath) == 0:
+            raise ValueError("Output file path must be provided")
+
+        base_directory = kwargs.get('base_directory', None)
+        plume_event_matrix_data = plume_event_matrix.to_dict(base_directory=base_directory)
+
+        if output_filepath.endswith('.yaml') or output_filepath.endswith('.yml'):
+            with open(output_filepath, 'w') as f:
+                yaml.dump(plume_event_matrix_data, f)
+        elif output_filepath.endswith('.json'):
+            with open(output_filepath, 'w') as f:
+                json.dump(plume_event_matrix_data, f)

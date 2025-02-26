@@ -3,7 +3,7 @@ This module contains the ensemble manager class for the SWMM model.
 """
 
 
-class SWMMEnsembleManager:
+class EnsembleManager:
     def __init__(
             self,
             name: str,

@@ -23,12 +23,12 @@ from . import moo
 from . import sensor
 
 
-def main():
-    """
-    Main function for the command line interface
-    :return:
-    """
 
+def configured_parser() -> argparse.ArgumentParser:
+    """
+    Configure the parser for the command line interface
+    :return: (argparse.ArgumentParser) The configured parser
+    """
     parser = argparse.ArgumentParser(
         prog='serto',
         description='The Stormwater Emergency Response Tool & Optimizer (SERTO)\n'
@@ -58,7 +58,17 @@ def main():
     moo.configure_subparsers(subparsers)
     ensemble.configure_subparsers(subparsers)
 
-    args = parser.parse_args()
+    return parser
+
+def parse_args(parser, args):
+    """
+    Parse the command line arguments
+    :param parser: (argparse.ArgumentParser) The configured parser for the command line interface
+    :param args: (List[str]) The command line arguments
+    :return: (argparse.Namespace) The parsed arguments
+    """
+
+    args = parser.parse_args(args)
 
     if args.command == 'sp':
         from .sensor import main as sp_main
@@ -75,6 +85,16 @@ def main():
     elif args.command == 'graphics':
         from .graphics import main as graphics_main
         graphics_main(args)
+
+
+def main():
+    """
+    Main function for the command line interface
+    :return:
+    """
+    parser = configured_parser()
+    args = parser.parse_args()
+    parse_args(parser, args)
 
 
 if __name__ == '__main__':
