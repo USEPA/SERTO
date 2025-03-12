@@ -28,8 +28,9 @@ class GaussianPlume(IDictable):
         """
         This class defines the plume type
         """
-        EMPIRICAL = 1
-        PHYSICS_BASED = 2
+        EMPIRICAL_LINEAR = 1
+        EMPIRICAL_EXPONENTIAL = 2
+        PHYSICS_BASED = 3
 
     def __init__(
             self,
@@ -37,9 +38,10 @@ class GaussianPlume(IDictable):
             source_location: Tuple[float, float],
             wind_direction: float,
             standard_deviation: Tuple[float, float] = None,
-            exponential_decay: float = 0.01,
+            exponential_decay_rate: float = None,
             wind_speed: float = 10.0,
-            turbulent_intensity: float = 0.25,
+            stability_coefficient: float = 0.06,
+            stability_exponent: float = 0.92,
             *args,
             **kwargs
 
@@ -50,13 +52,14 @@ class GaussianPlume(IDictable):
         physics-based formulation is used. If standard deviation is provided
         the empirical formulation is used.
 
-        :param source_strength: Source strength in kg/s
+        :param source_strength: Source strength flux in units of mass per unit area
         :param source_location: An array of the form [x, y]
           specifying the location of the source in meters
         :param wind_direction: Angle in degrees for direction of plume in degrees
           from the x-axis
         :param standard_deviation: An array of the form [downwind, crosswind]
           specifying the extent of the plume
+        :param standard_deviation_exp_growth_rate: Exponential growth rate of the standard deviation in m/s
         :param exponential_decay: Exponential decay factor
         :param wind_speed : Wind speed in m/s
         :param turbulent_intensity : Lateral turbulent intensity in m/s
@@ -66,19 +69,25 @@ class GaussianPlume(IDictable):
         self.source_location = source_location
         self.wind_direction = wind_direction
         self.wind_speed = wind_speed
-        self.turbulent_intensity = turbulent_intensity
+
+        self.stability_coefficient = stability_coefficient
+        self.stability_exponent = stability_exponent
 
         self.standard_deviation = standard_deviation
-        self.exponential_decay = exponential_decay
+        self.exponential_decay_rate = exponential_decay_rate
 
         self._direction_vector = np.squeeze(np.array([
             math.cos(math.radians(self.wind_direction)),
             math.sin(math.radians(self.wind_direction))
         ]))
 
-        self._plume_type = self.PlumeType.PHYSICS_BASED \
-            if self.standard_deviation is None else self.PlumeType.EMPIRICAL
-
+        if standard_deviation is None:
+            self._plume_type = self.PlumeType.PHYSICS_BASED
+        else:
+            if self.exponential_decay_rate == 0.0 or self.exponential_decay_rate is None:
+                self._plume_type = self.PlumeType.EMPIRICAL_LINEAR
+            else:
+                self._plume_type = self.PlumeType.EMPIRICAL_EXPONENTIAL
     @property
     def plume_type(self):
         """
@@ -126,23 +135,26 @@ class GaussianPlume(IDictable):
         if self.plume_type == self.PlumeType.PHYSICS_BASED:
             # physics-based formulation
 
-            downwind_standard_dev = self.turbulent_intensity * downwind_norm
-            crosswind_standard_dev = self.turbulent_intensity * crosswind_norm
-
-            crosswind_weight = downwind_norm / downwind_standard_dev
-            crosswind_standard_dev *= crosswind_weight
+            downwind_standard_dev = self.stability_coefficient *  np.power(downwind_norm, self.stability_exponent)
+            crosswind_standard_dev = self.stability_coefficient * np.power(crosswind_norm, self.stability_exponent)
 
             source_strength = self.source_strength / (
                     2.0 * np.pi * self.wind_speed * downwind_standard_dev * crosswind_standard_dev
             )
+        elif self.plume_type == self.PlumeType.EMPIRICAL_LINEAR:
 
-        else:
-            downwind_standard_dev  = self.standard_deviation[0]
+            downwind_standard_dev = self.standard_deviation[0]
             crosswind_standard_dev = self.standard_deviation[1] * downwind_norm / self.standard_deviation[0]
             source_strength = self.source_strength
 
-        # downwind_standard_dev  = self.standard_deviation[0] *  (1 - np.exp(-self.exponential_decay * downwind_norm))
-        # crosswind_standard_dev = self.standard_deviation[1] *  (1 - np.exp(-self.exponential_decay * downwind_norm))
+        else:
+            downwind_standard_dev = self.standard_deviation[0]
+
+            crosswind_standard_dev = self.standard_deviation[1] * (
+                    1.0 - np.exp(-self.exponential_decay_rate * downwind_norm)
+            )
+
+            source_strength = self.source_strength
 
         valid_concentrations = source_strength * np.exp(
             -0.5 * (crosswind_norm / crosswind_standard_dev) ** 2.0
@@ -213,7 +225,7 @@ class GaussianPlume(IDictable):
             resolution:float,
             crs: str,
             mass_loading_field: str = "Concentration",
-            mass_loadinf_flux_field: str = "Concentration (Mass/Area)"
+            mass_loading_flux_field: str = "Concentration (Mass/Area)"
     ) -> gpd.GeoDataFrame:
         """
         This function returns the concentrations for each point in a square polygon
@@ -225,7 +237,7 @@ class GaussianPlume(IDictable):
         :param resolution: The resolution of the grid
         :param crs: The coordinate reference system of the grid
         :param mass_loading_field: The name of the mass field in the GeoDataFrame
-        :param mass_loadinf_flux_field: The name of the mass per unit area field in the GeoDataFrame
+        :param mass_loading_flux_field: The name of the mass per unit area field in the GeoDataFrame
         :return: A GeoDataFrame with the concentration field
         """
 
@@ -253,7 +265,7 @@ class GaussianPlume(IDictable):
                     ])
                     for x, y in locations
                 ],
-                mass_loading_field: concentrations.flatten(),
+                mass_loading_flux_field: concentrations.flatten(),
                 "row_index": x_pts_index.flatten(),
                 "col_index": y_pts_index.flatten(),
                 'label': [f'{y}_{x}' for x, y in zip(x_pts_index.flatten(), y_pts_index.flatten())]
@@ -261,8 +273,8 @@ class GaussianPlume(IDictable):
             crs=crs
         )
 
-        concentration_polygons[mass_loadinf_flux_field] = \
-            concentration_polygons[mass_loading_field] / concentration_polygons.area
+        concentration_polygons[mass_loading_field] = \
+            concentration_polygons[mass_loading_flux_field] * concentration_polygons.area
 
         return concentration_polygons
 
@@ -296,7 +308,7 @@ class GaussianPlume(IDictable):
             resolution=mesh_resolution,
             crs=sub_catchment.crs,
             mass_loading_field=mass_loading_field,
-            mass_loadinf_flux_field=mass_loadinf_flux_field
+            mass_loading_flux_field=mass_loadinf_flux_field
         )
 
         temp_name = f'{mass_loading_field}_p'

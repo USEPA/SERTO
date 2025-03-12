@@ -1,7 +1,7 @@
 VERSION_INFO = (0, 0, 0, "dev1")
 __version__ = ".".join(map(str, VERSION_INFO))
 __author__ = "Caleb Buahin and Anne Mikelonis"
-__copyright__ = "Copyright (c) 2024"
+__copyright__ = "Copyright (c) 2025"
 __credits__ = ["Caleb Buahin and Anne Mikelonis"]
 __license__ = "MIT"
 __maintainer__ = "Caleb Buahin and Anne Mikelonis"
@@ -86,6 +86,7 @@ def parse_args(parser, args):
         from .graphics import main as graphics_main
         graphics_main(args)
 
+    return args
 
 def main():
     """
