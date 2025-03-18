@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 from ...swmm import SpatialSWMM, SpatialSWMMVisualization
 from ....analysis.wind import WindAnalysis
 
-from ....analysis.plumes import GaussianPlume, GaussianPlumeVisualization
+from ....analysis.plumes import GaussianPlume, PlumeEventMatrix
 from ....graphics.analysis.wind import WindVisualization
 
 class GaussianPlumeVisualization:
