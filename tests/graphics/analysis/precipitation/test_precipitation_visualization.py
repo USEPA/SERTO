@@ -92,5 +92,7 @@ class TestPrecipitationVisualization(unittest.TestCase):
             event_plot_attribute_labels=['Total Precipitation (in)', 'Peak Intensity (in/hr)', 'Duration (hours)']
         )
 
+
+
         plotly.offline.plot(figs[0][0], filename='test_rainfall_event_plotting.html')
         plotly.offline.plot(figs[0][1], filename='test_rainfall_event_distribution_plotting.html')

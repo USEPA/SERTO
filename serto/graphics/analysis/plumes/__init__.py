@@ -10,6 +10,7 @@ from typing import List, Callable, Any
 # third-party imports
 
 # local imports
+from .plumes import GaussianPlume, GaussianPlumeVisualization
 
 def configure_subparsers(graphics_subparsers: argparse.ArgumentParser):
     """

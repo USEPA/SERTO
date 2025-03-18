@@ -135,8 +135,8 @@ class GaussianPlume(IDictable):
         if self.plume_type == self.PlumeType.PHYSICS_BASED:
             # physics-based formulation
 
-            downwind_standard_dev = self.stability_coefficient *  np.power(downwind_norm, self.stability_exponent)
-            crosswind_standard_dev = self.stability_coefficient * np.power(crosswind_norm, self.stability_exponent)
+            downwind_standard_dev = self.stability_coefficient *  (downwind_norm ** self.stability_exponent)
+            crosswind_standard_dev = self.stability_coefficient *  (crosswind_norm ** self.stability_exponent)
 
             source_strength = self.source_strength / (
                     2.0 * np.pi * self.wind_speed * downwind_standard_dev * crosswind_standard_dev

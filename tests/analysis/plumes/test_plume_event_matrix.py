@@ -9,7 +9,7 @@ import numpy as np
 
 # local imports
 from serto.analysis.plumes import GaussianPlume, PlumeEventMatrix
-from serto.graphics.swmm import plot_plume_event_matrix
+from serto.graphics.swmm.spatialswmm import SpatialSWMMVisualization
 
 from ...spatialswmm.swmm import EXAMPLE_SWMM_TEST_MODEL_A
 
@@ -58,7 +58,7 @@ class TestPlumeEventMatrix(unittest.TestCase):
 
         import plotly
 
-        figs = plot_plume_event_matrix(plume_event_matrix, event_indexes=[0, 1, 2])
+        figs = SpatialSWMMVisualization.plot_plume_event_matrix(plume_event_matrix, event_indexes=[0, 1, 2])
 
         plotly.offline.plot(figs[0], filename='plume_event_matrix.html')
 

@@ -103,9 +103,9 @@ class TestPlume(unittest.TestCase):
             source_strength=1000000.0,
             source_location=(5267829.351724993, 4264426.024403716),
             wind_direction=275,
-            wind_speed=1,
-            stability_coefficient=0.79,
-            stability_exponent=0.71
+            wind_speed=6,
+            stability_coefficient=10,
+            stability_exponent=0.92
         )
 
         import matplotlib
@@ -122,6 +122,7 @@ class TestPlume(unittest.TestCase):
 
         matplotlib.use('TkAgg')
         plt.show()
+        matplotlib.use('TkAgg')
 
     def tearDown(self):
         """

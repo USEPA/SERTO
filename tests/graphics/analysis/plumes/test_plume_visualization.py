@@ -72,11 +72,12 @@ class TestPlumeVisualization(unittest.TestCase):
             ),
             wind_speed=10,
             wind_direction=202.5,
-            standard_deviation=(5000, 1000)
+            # standard_deviation=(5000, 1000), # Empirical linear
+            # exponential_decay_rate=0.001, # Empirical exponential
         )
 
-        conc_label = "Cesium-137 (Micro Curies)"
-        conc_label_flux = f"Cesium-137 (Micro Curies/ft^2)"
+        conc_label = "Cesium-137 (Curies)"
+        conc_label_flux = f"Cesium-137 (Curies/ft^2)"
 
         plume1_sub, plum1 = plume1.area_weighted_buildup(
             mesh_resolution=100,
@@ -89,6 +90,8 @@ class TestPlumeVisualization(unittest.TestCase):
         plum1 = plum1.to_crs('EPSG:4326')
         plume1_sub = plume1_sub.to_crs('EPSG:4326')
         plume1_valid = plum1[plum1[conc_label_flux] > min_flux]
+
+        print(f'Total Mass: {plume1_valid[conc_label].sum()}')
 
         max_flux = plume1_valid[conc_label_flux].max()
 
@@ -225,8 +228,8 @@ class TestPlumeVisualization(unittest.TestCase):
             standard_deviation=(4000, 2000)
         )
 
-        conc_label = "Cesium-137 (Micro Curies)"
-        conc_label_flux = f"Cesium-137 (Micro Curies/ft^2)"
+        conc_label = "Cesium-137 (Curies)"
+        conc_label_flux = f"Cesium-137 (Curies/ft^2)"
 
         plume1_sub, plum1 = plume1.area_weighted_buildup(
             mesh_resolution=100,

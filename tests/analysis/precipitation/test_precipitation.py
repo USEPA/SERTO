@@ -4,8 +4,8 @@ from plotly.offline import plot
 import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 
-from hydroanalytics.precipitation.precipitation import *
-from hydroanalytics.precipitation.tests.data import CVG_PRECIP
+from serto.analysis.precipitation import *
+from . import CVG_EXAMPLE_PRECIP_DATA
 
 HERE = os.path.dirname(os.path.realpath(__file__))
 
@@ -13,7 +13,7 @@ HERE = os.path.dirname(os.path.realpath(__file__))
 class TestEvent(unittest.TestCase):
     def setUp(self) -> None:
         self.rainfall_data = pd.read_csv(
-            CVG_PRECIP,
+            CVG_EXAMPLE_PRECIP_DATA,
             index_col=0,
             parse_dates=True,
         )
@@ -25,9 +25,9 @@ class TestEvent(unittest.TestCase):
         This function tests the get_events function
         :return:
         """
-        events = get_events(self.rainfall_data, floor=0.0)
+        events = PrecipitationAnalysis.get_events(self.rainfall_data, floor=0.0)
         events = events.loc[(events.precip_total > 0.05) & (events.duration > pd.Timedelta('1h'))]
-        events_cp = get_event_attributes(
+        events_cp = PrecipitationAnalysis.get_event_attributes(
             latitude=39.0470,
             longitude=-84.6656,
             events=events,
@@ -36,7 +36,7 @@ class TestEvent(unittest.TestCase):
         self.events = events_cp
         self.events['duration_hours'] = self.events['duration'] / pd.Timedelta('1h')
 
-        clustered_events = cluster_events(
+        clustered_events = PrecipitationAnalysis.cluster_events(
             events=self.events,
             cluster_columns=['duration_hours', 'precip_total', 'precip_peak', 'return_period'],
             number_of_clusters=15,

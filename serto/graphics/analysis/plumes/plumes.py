@@ -16,12 +16,11 @@ import contextily as ctx
 import matplotlib.pyplot as plt
 
 # project imports
-from serto.swmm import SpatialSWMM
-from serto.swmm import plot_swmm_catchments_plotly
-from serto.analysis.wind import WindAnalysis
-from serto.graphics.analysis.wind import WindVisualization
+from ...swmm import SpatialSWMM, SpatialSWMMVisualization
+from ....analysis.wind import WindAnalysis
 
-from ...analysis.plumes import GaussianPlume, PlumeEventMatrix
+from ....analysis.plumes import GaussianPlume, GaussianPlumeVisualization
+from ....graphics.analysis.wind import WindVisualization
 
 class GaussianPlumeVisualization:
     """
@@ -60,8 +59,8 @@ class PlumeEventMatrixVisualization:
 
         figs = []
 
-        catchment_traces = plot_swmm_catchments_plotly(plume_event_matrix.plume_event_matrix)
-        node_traces = plot_swmm_nodes_plotly(plume_event_matrix.swmm_model)
+        catchment_traces = SpatialSWMMVisualization.plot_catchments_plotly(plume_event_matrix.swmm_model)
+        node_traces = SpatialSWMMVisualization.plot_nodes_plotly(plume_event_matrix.swmm_model)
 
         nodes_centroid = plume_event_matrix.swmm_model.nodes.dissolve().centroid.to_crs('EPSG:4326')
         lon = nodes_centroid.geometry.x[0]

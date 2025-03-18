@@ -11,5 +11,5 @@ from typing import List, Callable, Any
 
 # local imports
 from .cli import *
-from .wind import *
+from .wind import WindAnalysisData, WindAnalysis
 
