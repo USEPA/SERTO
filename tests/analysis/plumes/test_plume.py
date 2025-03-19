@@ -8,7 +8,9 @@ import numpy as np
 
 # local imports
 from serto.analysis.plumes import GaussianPlume
+from serto.swmm import SpatialSWMM
 
+from tests.spatialswmm.swmm import EXAMPLE_SWMM_TEST_MODEL_A
 
 class TestPlume(unittest.TestCase):
     """
@@ -34,7 +36,7 @@ class TestPlume(unittest.TestCase):
 
         self.locations_2d = np.array(np.meshgrid(self.x, self.y)).T.reshape(-1, 2)
 
-    def test_2d_gaussian_with_standard_deviation_plume(self):
+    def test_2d_gaussian_with_standard_deviation(self):
         """
         This function tests the Gaussian plume module
         """
@@ -74,9 +76,56 @@ class TestPlume(unittest.TestCase):
         cb = ax.contourf(x, y, mesh_grid_concs)
         fig.colorbar(cb, label="Concentration (Picocuries)")
 
-        # matplotlib.use('TkAgg')
+        matplotlib.use('TkAgg')
         plt.show()
         print("Concentrations: ", concentrations)
+
+    def test_export_2d_gaussian_with_standard_deviation(self):
+        """
+        
+        """
+        x = np.arange(
+            start=5255271.338,
+            stop=5279182.901,
+            step=100.0
+        )
+
+        y = np.arange(
+            start=4250587.132,
+            stop=4276449.389,
+            step=100.0
+        )
+
+        xx, yy = np.meshgrid(x, y)
+
+        locations_2d = np.array([xx.ravel(), yy.ravel()]).T
+
+        plume = GaussianPlume(
+            source_strength=1200.0,
+            source_location=(5267829.351724993, 4264426.024403716),
+            wind_direction=275,
+            standard_deviation=(5000, 1000),
+            exponential_decay_rate=0.00025
+        )
+
+        self.model = SpatialSWMM.read_model(
+            model_path=EXAMPLE_SWMM_TEST_MODEL_A['filepath'],
+            crs=EXAMPLE_SWMM_TEST_MODEL_A['crs']
+        )
+
+        conc_label = "Cesium-137 (Curies)"
+        conc_label_flux = f"Cesium-137 (Curies/ft^2)"
+
+        plume_subcatchments, plum_mesh = plume.area_weighted_buildup(
+            mesh_resolution=100,
+            sub_catchment=self.model.subcatchments,
+            mass_loading_field=conc_label,
+            mass_loadinf_flux_field=conc_label_flux
+        )
+
+        plume_subcatchments.to_file("plume_subcatchments.shp")
+        plum_mesh.to_file("plume_mesh.shp")
+
 
     def test_2d_gaussian_with_wind_plume(self):
         """
@@ -104,7 +153,7 @@ class TestPlume(unittest.TestCase):
             source_location=(5267829.351724993, 4264426.024403716),
             wind_direction=275,
             wind_speed=6,
-            stability_coefficient=10,
+            stability_coefficient=0.06,
             stability_exponent=0.92
         )
 
