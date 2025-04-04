@@ -69,11 +69,6 @@ designed for optimizing infrastructure sizing and placement, operations, and eme
 US EPA Disclaimer
 -----------------
 
-The U.S. Environmental Protection Agency through its Office of Research and Development funded and collaborated 
-in the research described here under an Interagency Agreement with the Department of Energy's Sandia National Laboratories.
-It has been subjected to the Agency's review and has been approved for publication. Note that approval does not signify that 
-the contents necessarily reflect the views of the Agency. Mention of trade names products, or services does not convey official 
-EPA approval, endorsement, or recommendation.
 
 Citing SERTO
 -----------------
