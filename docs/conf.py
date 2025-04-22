@@ -151,7 +151,7 @@ exclude_patterns = [
     '_build',
     'tests',
     'baseflow'
-    '*\\cli.py'
+    '*\\analysis_cli.py'
 ]
 
 # The reST default role (used for this markup: `text`) to use for all

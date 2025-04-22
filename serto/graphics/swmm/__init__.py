@@ -11,5 +11,5 @@ from typing import List, Callable, Any
 # third-party imports
 
 # local imports
-from .spatialswmm import *
+# from .spatialswmm import *
 from .cli import *

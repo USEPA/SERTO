@@ -23,7 +23,6 @@ from . import moo
 from . import sensor
 
 
-
 def configured_parser() -> argparse.ArgumentParser:
     """
     Configure the parser for the command line interface

@@ -4,15 +4,11 @@ import unittest
 # 3rd party imports
 import pandas as pd
 import plotly
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
 
 # project imports
 from ....analysis.precipitation import CVG_EXAMPLE_PRECIP_DATA
 from serto.analysis.precipitation import PrecipitationAnalysis
 from serto.graphics.analysis.precipitation import PrecipitationVisualization
-from tests.spatialswmm.swmm import EXAMPLE_SWMM_TEST_MODEL_A
 
 
 class TestPrecipitationVisualization(unittest.TestCase):

@@ -4,12 +4,11 @@ The serto.ensemble module provides the functionality for ensemble simulations.
 
 # python imports
 import argparse
-
+from typing import Callable, Any
 
 # third party imports
 
 # local imports
-
 
 def configure_subparsers(sub_parsers: argparse._SubParsersAction):
     """
@@ -52,12 +51,26 @@ def main(parser_args: argparse.Namespace, *args, **kwargs):
     """
 
     if parser_args.command == 'ensemble':
-        run_ensemble(**vars(parser_args))
+        process_args(**vars(parser_args))
     else:
         raise ValueError(f"Invalid ensemble command: {parser_args.command}")
 
 
-def run_ensemble(*args, **kwargs):
+def process_args_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+    """
+    Decorator for the flow analysis module.
+    :param func: The function to decorate
+    :return: The decorated function
+    """
+
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+@process_args_decorator
+def process_args(*args, **kwargs):
     """
     Run the ensemble simulation.
     :param args: Additional arguments to pass to the main
