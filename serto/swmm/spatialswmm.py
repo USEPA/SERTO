@@ -9,6 +9,7 @@ import pandas as pd
 from pyproj import CRS
 import geopandas as gpd
 from shapely.geometry import Point, LineString, Polygon
+from networkx import DiGraph, MultiDiGraph
 
 
 # project imports
@@ -119,9 +120,11 @@ class SpatialSWMM:
 
     INFLOW_COLUMNS = ['Node', 'Constituent', 'Time Series', 'Type', 'Mfactor', 'Sfactor', 'Baseline', 'Pattern']
 
-    def __init__(self, crs: Union[str, CRS, int, Dict, Tuple[str, str], Any]) -> None:
+    def __init__(self, inp_file: str,  crs: Union[str, CRS, int, Dict, Tuple[str, str], Any]) -> None:
         """
         This function initializes the SpatialSWMM object
+        :param inp_file: The path to the SWMM input file
+        :type inp_file: str
         :param crs: The coordinate reference system for the model
         Initialize a CRS class instance with:
           - PROJ string
@@ -134,6 +137,7 @@ class SpatialSWMM:
           - A tuple of ("auth_name": "auth_code") [i.e ('epsg', '4326')]
           - An object with a `to_wkt` method.
           - A :class:`pyproj.crs.CRS` class instance.
+        :type crs: str, CRS, int, Dict, Tuple[str, str], Any
         """
         self._crs = crs if isinstance(crs, CRS) else CRS.from_user_input(crs)
         self._title_comments: List[str] = []
@@ -174,37 +178,47 @@ class SpatialSWMM:
         self._coverages: pd.DataFrame = pd.DataFrame(columns=SpatialSWMM.COVERAGES_COLUMNS)
         self._loadings: pd.DataFrame = pd.DataFrame(columns=SpatialSWMM.LOADINGS_COLUMNS)
 
-    def initialize(self):
-        """
-        Initialize the model
-        :return:
-        """
-        self.initialize_options()
+        self.__read_model(
+            model_path=inp_file,
+        )
 
-    def initialize_options(self):
-        """
-        Initialize the options
-        :return:
-        """
 
-        start_date = datetime.now()
-        start_date = datetime(start_date.year, start_date.month, start_date.day)
 
-        end_date = start_date + pd.Timedelta('1d')
-
-        for option_key, option_value in SpatialSWMM.OPTIONS_COLUMNS_PARAMS.items():
-            if isinstance(option_value, list):
-                self._options.loc[option_key] = option_value[0]
-            elif option_key == 'START_DATE' or option_key == 'REPORT_START_DATE':
-                self._options.loc[option_key] = start_date.strftime('%m/%d/%Y')
-            elif option_key == 'START_TIME' or option_key == 'REPORT_START_TIME':
-                self._options.loc[option_key] = start_date.strftime('%H:%M:%S')
-            elif option_key == 'END_DATE':
-                self._options.loc[option_key] = end_date.strftime('%m/%d/%Y')
-            elif option_key == 'END_TIME':
-                self._options.loc[option_key] = end_date.strftime('%H:%M:%S')
-            else:
-                self._options.loc[option_key] = option_value
+    # def initialize(self):
+    #     """
+    #     Initialize the model
+    #     :return:
+    #     """
+    #     self._title_comments = []
+    #     self._title = []
+    #     self._options = pd.DataFrame(columns=['Option', 'Value', *SpatialSWMM.COMMENTS_COLUMNS])
+    #
+    #     self.initialize_options()
+    #
+    # def initialize_options(self):
+    #     """
+    #     Initialize the options
+    #     :return:
+    #     """
+    #
+    #     start_date = datetime.now()
+    #     start_date = datetime(start_date.year, start_date.month, start_date.day)
+    #
+    #     end_date = start_date + pd.Timedelta('1d')
+    #
+    #     for option_key, option_value in SpatialSWMM.OPTIONS_COLUMNS_PARAMS.items():
+    #         if isinstance(option_value, list):
+    #             self._options.loc[option_key] = option_value[0]
+    #         elif option_key == 'START_DATE' or option_key == 'REPORT_START_DATE':
+    #             self._options.loc[option_key] = start_date.strftime('%m/%d/%Y')
+    #         elif option_key == 'START_TIME' or option_key == 'REPORT_START_TIME':
+    #             self._options.loc[option_key] = start_date.strftime('%H:%M:%S')
+    #         elif option_key == 'END_DATE':
+    #             self._options.loc[option_key] = end_date.strftime('%m/%d/%Y')
+    #         elif option_key == 'END_TIME':
+    #             self._options.loc[option_key] = end_date.strftime('%H:%M:%S')
+    #         else:
+    #             self._options.loc[option_key] = option_value
 
     @property
     def title(self) -> List[str]:
@@ -213,6 +227,16 @@ class SpatialSWMM:
         :return: The title of the model
         """
         return self._title
+
+    @property
+    def options(self):
+        """:
+        This function returns the options of the model
+        :return: The options of the model
+        """
+        return self._options
+
+
 
     @property
     def title_comments(self) -> List[str]:
@@ -304,6 +328,37 @@ class SpatialSWMM:
         """
         return self._loadings
 
+    @property
+    def network(self) ->  MultiDiGraph:
+        """
+        This function returns the network of the model
+        :return: The network of the model
+        """
+        if not hasattr(self, '_network'):
+
+            self._network = MultiDiGraph()
+
+            self._network.add_nodes_from(
+                [
+                    (
+                        index,
+                        {
+                            'index': i,
+                            'type': row['NodeType'],
+                            **row.to_dict()
+                        }
+                    )
+                    for i, (index, row) in  enumerate(self.nodes.iterrows())
+                ]
+            )
+
+            self._network.add_edges_from([
+                (row['From Node'], row['To Node'], {'name': index, 'type': row['Type']})
+                for i, (index, row) in enumerate(self.links.iterrows())]
+            )
+
+        return self._network
+
     def add_node(self, node_id: str, node_type: str, node_attributes: Dict[str, Any]) -> None:
         """
         This function adds a node to the model
@@ -367,8 +422,7 @@ class SpatialSWMM:
         """
         pass
 
-    @staticmethod
-    def read_model(model_path: str, crs: Union[str, CRS]) -> SpatialSWMM:
+    def __read_model(self, model_path: str) -> SpatialSWMM:
         """
         This function reads the model from the model path
         :param crs: Coordinate reference system for the model
@@ -376,14 +430,11 @@ class SpatialSWMM:
         :return:
         """
 
-        model = None
         current_section = ""
 
         with open(model_path, 'r') as swmm_file:
 
-            model = SpatialSWMM(crs)
             comments = []
-
             coordinates = {}
             vertices = {}
             polygons = {}
@@ -413,12 +464,12 @@ class SpatialSWMM:
                         elif line.startswith(';'):
                             comments.append(line)
                         else:
-                            model.options.loc[tokens[0]] = tokens[1]
+                            self._options.loc[tokens[0]] = tokens[1]
 
                             if len(comments) > 0:
-                                model.options.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = comments
+                                self._options.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = comments
                             else:
-                                model.options.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
+                                self._options.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
 
                             comments.clear()
 
@@ -429,14 +480,14 @@ class SpatialSWMM:
                             comments.append(line)
                         else:
                             for i in range(1, len(tokens)):
-                                model._raingages.loc[tokens[0], SpatialSWMM.RAINGAGES_COLUMNS[i - 1]] = tokens[i]
+                                self._raingages.loc[tokens[0], SpatialSWMM.RAINGAGES_COLUMNS[i - 1]] = tokens[i]
 
                             if len(comments) > 0:
-                                model._raingages.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
+                                self._raingages.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
                             else:
-                                model._raingages.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
+                                self._raingages.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
 
-                            model._raingages.loc[tokens[0], "geometry"] = Point(float(0.0), float(0.0))
+                            self._raingages.loc[tokens[0], "geometry"] = Point(float(0.0), float(0.0))
 
                             comments.clear()
 
@@ -448,14 +499,14 @@ class SpatialSWMM:
                             comments.append(line)
                         else:
                             for i in range(1, len(tokens)):
-                                model._nodes.loc[tokens[0], SpatialSWMM.JUNCTION_COLUMNS[i - 1]] = tokens[i]
+                                self._nodes.loc[tokens[0], SpatialSWMM.JUNCTION_COLUMNS[i - 1]] = tokens[i]
 
                             if len(comments) > 0:
-                                model._nodes.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
+                                self._nodes.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
                             else:
-                                model._nodes.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
+                                self._nodes.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
 
-                            model._nodes.loc[tokens[0], "NodeType"] = "JUNCTIONS"
+                            self._nodes.loc[tokens[0], "NodeType"] = "JUNCTIONS"
                             comments.clear()
 
                     elif current_section.upper() in '[OUTFALLS]':
@@ -466,14 +517,14 @@ class SpatialSWMM:
                             comments.append(line)
                         else:
                             for i in range(1, len(tokens)):
-                                model._nodes.loc[tokens[0], SpatialSWMM.OUTFALL_COLUMNS[i - 1]] = tokens[i]
+                                self._nodes.loc[tokens[0], SpatialSWMM.OUTFALL_COLUMNS[i - 1]] = tokens[i]
 
                             if len(comments) > 0:
-                                model._nodes.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
+                                self._nodes.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
                             else:
-                                model._nodes.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
+                                self._nodes.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
 
-                            model._nodes.loc[tokens[0], "NodeType"] = "OUTFALLS"
+                            self._nodes.loc[tokens[0], "NodeType"] = "OUTFALLS"
                             comments.clear()
 
                     elif current_section.upper() in '[STORAGE]':
@@ -484,14 +535,14 @@ class SpatialSWMM:
                             comments.append(line)
                         else:
                             for i in range(1, len(tokens)):
-                                model._nodes.loc[tokens[0], SpatialSWMM.STORAGE_COLUMNS[i - 1]] = tokens[i]
+                                self._nodes.loc[tokens[0], SpatialSWMM.STORAGE_COLUMNS[i - 1]] = tokens[i]
 
                             if len(comments) > 0:
-                                model._nodes.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
+                                self._nodes.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
                             else:
-                                model._nodes.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
+                                self._nodes.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
 
-                            model._nodes.loc[tokens[0], "NodeType"] = "STORAGE"
+                            self._nodes.loc[tokens[0], "NodeType"] = "STORAGE"
                             comments.clear()
 
                     elif current_section.upper() in '[SUBCATCHMENTS]':
@@ -501,15 +552,15 @@ class SpatialSWMM:
                             comments.append(line)
                         else:
                             for i in range(1, len(tokens)):
-                                model._sub_catchments.loc[tokens[0], SpatialSWMM.SUB_CATCHMENT_COLUMNS[i - 1]] = tokens[
+                                self._sub_catchments.loc[tokens[0], SpatialSWMM.SUB_CATCHMENT_COLUMNS[i - 1]] = tokens[
                                     i]
 
                             if len(comments) > 0:
-                                model._sub_catchments.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
+                                self._sub_catchments.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
                             else:
-                                model._sub_catchments.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
+                                self._sub_catchments.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
 
-                            model._sub_catchments.loc[tokens[0], "SubCatchmentType"] = "SUBCATCHMENTS"
+                            self._sub_catchments.loc[tokens[0], "SubCatchmentType"] = "SUBCATCHMENTS"
                             comments.clear()
 
                     elif current_section.upper() in '[SUBAREAS]':
@@ -519,12 +570,12 @@ class SpatialSWMM:
                             comments.append(line)
                         else:
                             for i in range(1, len(tokens)):
-                                model._sub_areas.loc[tokens[0], SpatialSWMM.SUB_AREA_COLUMNS[i - 1]] = tokens[i]
+                                self._sub_areas.loc[tokens[0], SpatialSWMM.SUB_AREA_COLUMNS[i - 1]] = tokens[i]
 
                             if len(comments) > 0:
-                                model._sub_areas.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
+                                self._sub_areas.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
                             else:
-                                model._sub_areas.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
+                                self._sub_areas.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
 
                             comments.clear()
 
@@ -535,14 +586,14 @@ class SpatialSWMM:
                             comments.append(line)
                         else:
                             for i in range(1, len(tokens)):
-                                model._links.loc[tokens[0], SpatialSWMM.CONDUIT_COLUMNS[i - 1]] = tokens[i]
+                                self._links.loc[tokens[0], SpatialSWMM.CONDUIT_COLUMNS[i - 1]] = tokens[i]
 
                             if len(comments) > 0:
-                                model._links.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
+                                self._links.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
                             else:
-                                model._links.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
+                                self._links.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
 
-                            model._links.loc[tokens[0], "LinkType"] = "CONDUITS"
+                            self._links.loc[tokens[0], "LinkType"] = "CONDUITS"
                             comments.clear()
 
                     elif current_section.upper() in '[ORIFICES]':
@@ -552,14 +603,14 @@ class SpatialSWMM:
                             comments.append(line)
                         else:
                             for i in range(1, len(tokens)):
-                                model._links.loc[tokens[0], SpatialSWMM.ORIFICE_COLUMNS[i - 1]] = tokens[i]
+                                self._links.loc[tokens[0], SpatialSWMM.ORIFICE_COLUMNS[i - 1]] = tokens[i]
 
                             if len(comments) > 0:
-                                model._links.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
+                                self._links.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
                             else:
-                                model._links.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
+                                self._links.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
 
-                            model._links.loc[tokens[0], "LinkType"] = "ORIFICES"
+                            self._links.loc[tokens[0], "LinkType"] = "ORIFICES"
                             comments.clear()
 
                     elif current_section.upper() in '[WEIRS]':
@@ -570,14 +621,14 @@ class SpatialSWMM:
                             comments.append(line)
                         else:
                             for i in range(1, len(tokens)):
-                                model._links.loc[tokens[0], SpatialSWMM.WEIR_COLUMNS[i - 1]] = tokens[i]
+                                self._links.loc[tokens[0], SpatialSWMM.WEIR_COLUMNS[i - 1]] = tokens[i]
 
                             if len(comments) > 0:
-                                model._links.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
+                                self._links.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
                             else:
-                                model._links.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
+                                self._links.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
 
-                            model._links.loc[tokens[0], "LinkType"] = "WEIRS"
+                            self._links.loc[tokens[0], "LinkType"] = "WEIRS"
                             comments.clear()
 
                     elif current_section.upper() in '[OUTLETS]':
@@ -587,14 +638,14 @@ class SpatialSWMM:
                             comments.append(line)
                         else:
                             for i in range(1, len(tokens)):
-                                model._links.loc[tokens[0], SpatialSWMM.OUTLET_COLUMNS[i - 1]] = tokens[i]
+                                self._links.loc[tokens[0], SpatialSWMM.OUTLET_COLUMNS[i - 1]] = tokens[i]
 
                             if len(comments) > 0:
-                                model._links.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
+                                self._links.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
                             else:
-                                model._links.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
+                                self._links.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
 
-                            model._links.loc[tokens[0], "LinkType"] = "OUTLETS"
+                            self._links.loc[tokens[0], "LinkType"] = "OUTLETS"
                             comments.clear()
 
                     elif current_section.upper() in '[XSECTIONS]':
@@ -604,12 +655,12 @@ class SpatialSWMM:
                             comments.append(line)
                         else:
                             for i in range(1, len(tokens)):
-                                model._xsections.loc[tokens[0], SpatialSWMM.XSECTION_COLUMNS[i - 1]] = tokens[i]
+                                self._xsections.loc[tokens[0], SpatialSWMM.XSECTION_COLUMNS[i - 1]] = tokens[i]
 
                             if len(comments) > 0:
-                                model._xsections.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
+                                self._xsections.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
                             else:
-                                model._xsections.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
+                                self._xsections.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
 
                             comments.clear()
 
@@ -620,12 +671,12 @@ class SpatialSWMM:
                             comments.append(line)
                         else:
                             for i in range(1, len(tokens)):
-                                model._pollutants.loc[tokens[0], SpatialSWMM.POLLUTANTS_COLUMNS[i - 1]] = tokens[i]
+                                self._pollutants.loc[tokens[0], SpatialSWMM.POLLUTANTS_COLUMNS[i - 1]] = tokens[i]
 
                             if len(comments) > 0:
-                                model._pollutants.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
+                                self._pollutants.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
                             else:
-                                model._pollutants.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
+                                self._pollutants.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
 
                             comments.clear()
 
@@ -636,12 +687,12 @@ class SpatialSWMM:
                             comments.append(line)
                         else:
                             for i in range(1, len(tokens)):
-                                model._landuses.loc[tokens[0], SpatialSWMM.LANDUSES_COLUMNS[i - 1]] = tokens[i]
+                                self._landuses.loc[tokens[0], SpatialSWMM.LANDUSES_COLUMNS[i - 1]] = tokens[i]
 
                             if len(comments) > 0:
-                                model._landuses.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
+                                self._landuses.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = ','.join(comments)
                             else:
-                                model._landuses.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
+                                self._landuses.loc[tokens[0], SpatialSWMM.COMMENTS_COLUMNS[0]] = None
 
                             comments.clear()
 
@@ -686,35 +737,34 @@ class SpatialSWMM:
                         else:
                             coordinates[tokens[0]] = (float(tokens[1]), float(tokens[2]))
 
-        for raingage_id, _ in model._raingages.iterrows():
+        for raingage_id, _ in self._raingages.iterrows():
             if raingage_id in coordinates:
-                model._raingages.loc[raingage_id, 'geometry'] = Point(coordinates[raingage_id])
+                self._raingages.loc[raingage_id, 'geometry'] = Point(coordinates[raingage_id])
 
-        for node_id, _ in model._nodes.iterrows():
+        for node_id, _ in self._nodes.iterrows():
             if node_id in coordinates:
-                model._nodes.loc[node_id, 'geometry'] = Point(coordinates[node_id])
+                self._nodes.loc[node_id, 'geometry'] = Point(coordinates[node_id])
 
-        for link_id, _ in model._links.iterrows():
+        for link_id, _ in self._links.iterrows():
             if link_id in vertices:
                 vertex_list = vertices[link_id]
-                start_node_column = model._links.columns[1]
-                end_node_column = model._links.columns[2]
+                start_node_column = self._links.columns[1]
+                end_node_column = self._links.columns[2]
 
-                start_node = model._links.loc[link_id, start_node_column]
-                end_node = model._links.loc[link_id, end_node_column]
+                start_node = self._links.loc[link_id, start_node_column]
+                end_node = self._links.loc[link_id, end_node_column]
 
                 vertex_list = [coordinates[start_node]] + vertex_list + [coordinates[end_node]]
-                model._links.loc[link_id, 'geometry'] = LineString(vertex_list)
+                self._links.loc[link_id, 'geometry'] = LineString(vertex_list)
             else:
-                start_node_column = model._links.columns[1]
-                end_node_column = model._links.columns[2]
-                start_node = model._links.loc[link_id, start_node_column]
-                end_node = model._links.loc[link_id, end_node_column]
-                model._links.loc[link_id, 'geometry'] = LineString([coordinates[start_node], coordinates[end_node]])
+                start_node_column = self._links.columns[1]
+                end_node_column = self._links.columns[2]
+                start_node = self._links.loc[link_id, start_node_column]
+                end_node = self._links.loc[link_id, end_node_column]
+                self._links.loc[link_id, 'geometry'] = LineString([coordinates[start_node], coordinates[end_node]])
 
-        for sub_catchment_id, _ in model._sub_catchments.iterrows():
+        for sub_catchment_id, _ in self._sub_catchments.iterrows():
             if sub_catchment_id in polygons:
                 polygon_list = polygons[sub_catchment_id]
-                model._sub_catchments.loc[sub_catchment_id, 'geometry'] = Polygon(polygon_list)
+                self._sub_catchments.loc[sub_catchment_id, 'geometry'] = Polygon(polygon_list)
 
-        return model
