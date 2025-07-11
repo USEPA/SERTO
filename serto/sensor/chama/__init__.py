@@ -10,7 +10,9 @@ from typing import List, Callable, Any
 # third-party imports
 
 # local imports
-
+from .input import *
+from .runner import *
+from .sensors import *
 
 def configure_subparsers(sensor_subparsers: argparse.ArgumentParser):
     """

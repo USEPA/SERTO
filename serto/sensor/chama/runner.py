@@ -1,3 +1,4 @@
+# local imports
 import logging
 import os
 from typing import List, Dict, Any, Iterable, Tuple
@@ -6,21 +7,20 @@ import re
 import time
 from pathlib import Path
 
+# 3rd party imports
 import pandas as pd
-from swmm.toolkit import solver
-from pyswmm import Output
-from swmm.toolkit import output, shared_enum
+from epaswmm import solver, output
 
 import multiprocessing as mp
 from threading import Lock
 from mpi4py import MPI
 import numpy as np
 
-from .. import DEFAULT_THREADS_PER_SIMULATION
-from .. import utils
-
+# local imports
+from ... import SERTODefaults
 
 class SimulationsRunner:
+
     def __init__(
             self,
             config: Dict[Any, Any],
@@ -52,7 +52,7 @@ class SimulationsRunner:
 
         self.num_processors = num_processors
         self.pollutant = config.get('pollutant')
-        self.threads_per_simulation = config.get('threads_per_simulation', DEFAULT_THREADS_PER_SIMULATION)
+        self.threads_per_simulation = config.get('threads_per_simulation', SERTODefaults.THREADS_PER_SIMULATION)
         self.potential_sensor_locations = sensor_locations
         self.use_existing = use_existing
         self.delete_results_after_run = delete_results_after_run
@@ -127,13 +127,13 @@ class SimulationsRunner:
 
         results = []
 
-        with Output(out_file) as output:
+        with output.Output(out_file) as output_file:
             scenario_name = Path(out_file).stem
             for index, row in potential_sensor_locations.iterrows():
                 node_id = row['Sensor']
-                pollutant_series = output.node_series(
-                    node_id,
-                    shared_enum.NodeAttribute.POLLUT_CONC_0,
+                pollutant_series = output_file.get_node_timeseries(
+                    element_index=node_id,
+                    attribute=output.NodeAttribute.POLLUTANT_CONCENTRATION,
                 )
                 pollutant_series = pd.DataFrame.from_dict(pollutant_series, orient='index', columns=[pollutant])
 
@@ -204,7 +204,7 @@ class SimulationsRunner:
             logging.info(f'Running {inp_file}')
 
             try:
-                error = solver.swmm_run(inp_file, rpt_file, out_file)
+                error = solver.run_solver(inp_file, rpt_file, out_file)
             except Exception as e:
                 logging.error(f'Error running {inp_file}: {e}')
                 report_summary['error'] = str(e)

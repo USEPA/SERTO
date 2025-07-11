@@ -21,7 +21,8 @@ import chama
 from mpi4py import MPI
 import getmac
 
-from . import InputFileGenerator, SensorGenerator, SimulationsRunner
+from ... import SERTODefaults
+from . import , SensorGenerator, SimulationsRunner
 from .. import utils
 
 

@@ -249,6 +249,45 @@ class SERTODefaults:
         name, x, y = s.split(',')
         return name, float(x), float(y)
 
+    @staticmethod
+    def return_path(potential_parent: str, path: str) -> str:
+        """Return the path."""
+        if os.path.isabs(path):
+            return path
+        else:
+            return os.path.join(potential_parent, path)
+
+    @staticmethod
+    def progress_bar(
+            iteration: int,
+            total: int,
+            prefix: str = '',
+            suffix: str = '',
+            decimals: int = 1,
+            length: int = 100,
+            fill: str = '|',
+            print_end: str = '\r'
+    ):
+        """
+        Call in a loop to create terminal progress bar
+        :param iteration: current iteration
+        :param total: total iterations
+        :param prefix: prefix string
+        :param suffix: suffix string
+        :param decimals: positive number of decimals in percent complete
+        :param length: character length of bar
+        :param fill: bar fill character
+        :param print_end: end character (e.g. "\r", "\r\n")
+        """
+        percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+        filled_length = int(length * iteration // total)
+        bar = fill * filled_length + '-' * (length - filled_length)
+        print_text = f'\r{prefix} |{bar}| {percent}% {suffix}'
+        print(print_text, end=print_end)
+        # Print New Line on Complete
+        if iteration == total:
+            print()
+
 
 class SERTONumpyEncoder(json.JSONEncoder):
     def default(self, obj):
