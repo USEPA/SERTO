@@ -32,28 +32,43 @@ def configure_subparsers(analysis_subparsers: argparse.ArgumentParser):
 
     # Event analysis
 
-    precip_event_parser = precip_analysis_subparsers.add_parser('event', help='Precipitation event analysis')
+    precip_event_parser = precip_analysis_subparsers.add_parser('events', help='Precipitation event analysis')
 
     precip_event_parser.add_argument(
-        "--csv",
-        help="CSV file containing precipitation data",
-        metavar='csv',
+        "data",
+        help="Time series cvv file containing precipitation data",
+        metavar='data',
         action='store',
-        required=True,
+        # required=True,
     )
+
+
+
+    precip_event_parser.add_argument(
+        'output',
+        metavar='output',
+        help='Output csv file for events',
+        action='store'
+    )
+
 
     precip_event_parser.add_argument(
         "-t",
         "--inter_event_time",
-        help="Inter event time (in hours)",
+        help="Inter event time (in hours). \n"
+             "This is the minimum time between two precipitation events \n"
+             "to be considered separate events. Default is 24 hours.",
         metavar='inter_event_time',
-        action='store',
         required=True,
+        type=float,
+        action='store',
+        default=24.0,
     )
 
     precip_event_parser.add_argument(
         "--lat",
         help="Latitude",
+        type=float,
         action='store',
         metavar='lat',
     )
@@ -62,15 +77,18 @@ def configure_subparsers(analysis_subparsers: argparse.ArgumentParser):
         "--lon",
         help="Longitude",
         action='store',
+        type=float,
         metavar='lon',
     )
 
     precip_event_parser.add_argument(
         "-s",
         "--series",
-        help="Precipitation series to use for extracting return periods from NOAA Atlas 14",
+        help="Precipitation series to use for extracting return periods from NOAA Atlas 14. Options are 'ams' for "
+             "annual maximum series or 'pds' for partial duration series.",
         metavar='series',
         action='store',
+        type=str,
         choices=["ams", "pds"],
     )
 
@@ -78,7 +96,8 @@ def configure_subparsers(analysis_subparsers: argparse.ArgumentParser):
         "-c",
         "--clusters",
         help="Cluster precipitation events based on number of clusters provided",
-        metavar='series',
+        type=int,
+        metavar='clusters',
         action='store',
     )
 
@@ -89,16 +108,21 @@ def configure_subparsers(analysis_subparsers: argparse.ArgumentParser):
         metavar='cluster_output'
     )
 
-    precip_event_parser.add_argument(
-        '-o',
-        '--output',
-        metavar='output',
-        help='Output csv file path',
-        required=True,
-        action='store'
-    )
+
 
     # IDF curve generation
+    precip_idf_parser = precip_analysis_subparsers.add_parser(
+        'idf',
+        help='Precipitation IDF curve generation'
+    )
+
+
+    # Sample Event Analysis
+    precip_sample_event_parser = precip_analysis_subparsers.add_parser(
+        'sample',
+        help='Select precip event samples analysis'
+    )
+
 
 
 def main(parser_args: argparse.Namespace, *args, **kwargs):

@@ -13,73 +13,49 @@ def node_flow_destinations(
     flows: csr_matrix
 ) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
     """
-    For each node, estimate the absolute and fractional flows from that node
-    that reach every other node in the network.
-    :param flows: csr_matrix, shape (n, n), flows[i, j] = flow from i to j
-    :return: (absolute_flows, fractional_flows), both shape (n, n)
-             absolute_flows[i, j]: flow from i that ends up at j
-             fractional_flows[i, j]: fraction of i's outflow that ends up at j
+    Calculate the flows and fractional flows at downstream nodes that eventually receive flows from upstream nodes.
+
+    :param flows: (numpy.ndarray or scipy.sparse.csr_matrix): nxn matrix representing flows between nodes.
+    :returns: numpy.ndarray: nxn matrix where each row represents the upstream node and columns
+    represent the flows and fractional flows.
     """
+
     n = flows.shape[0]
-    outflows = np.array(flows.sum(axis=1)).flatten()
-    outflows[outflows == 0] = 1  # Avoid division by zero
 
-    # Transition matrix: T[i, j] = fraction of i's outflow going to j
-    T = flows.multiply(1 / outflows[:, None])
+    # Create an identity matrix as a sparse matrix
+    identity_matrix = identity(n, format='csr')
 
-    # Fundamental matrix: (I - T)^-1
-    I = identity(n, format='csr')
-    F = spsolve(I - T, I)  # shape (n, n)
-    F = np.array(F).reshape((n, n))
+    # Transpose the flow matrix to consider the perspective of receiving nodes
+    transposed_flow_matrix = flows.transpose()
 
-    # F[i, j]: fraction of flow at node j that originated from node i
-    # For destinations, we want: for each i, the amount from i that ends up at j
-    # So, absolute_flows[i, j] = F[i, j] * outflows[i]
-    absolute_flows = F * outflows[:, None]
+    # Solve the linear system (I - transposed_flow_matrix) * X = I directly
+    flow_fractions = spsolve(identity_matrix - transposed_flow_matrix, identity_matrix)
 
-    # Fractional flows: for each i, fraction of i's outflow that ends up at j
-    row_sums = absolute_flows.sum(axis=1)
-    row_sums[row_sums == 0] = 1  # Avoid division by zero
-    fractional_flows = absolute_flows / row_sums[:, None]
+    # Calculate the flow magnitudes by multiplying the flow fractions by the transposed flow matrix
+    flow_magnitudes = flow_fractions @ transposed_flow_matrix.toarray()
 
-    return absolute_flows, fractional_flows
+    return flow_fractions, flow_magnitudes
 
 
 def node_flow_origins(flows: csr_matrix):
     """
-    Given a flow matrix (i->j), compute for each downstream node:
-    1. The absolute flow at the downstream node that originated from each upstream node.
-    2. The fraction of the downstream node's total flow that originated from each upstream node.
-    :param flows: csr_matrix, shape (n, n), flow_matrix[i, j] = flow from i to j
-    :return: (absolute_contributions, fractional_contributions), both shape (n, n)
+    Calculate the fraction and magnitudes of flows from upstream nodes to downstream nodes.
+    :param flows: (numpy.ndarray or scipy.sparse.csr_matrix): nxn matrix representing flows between nodes.
+    :return: numpy.ndarray: nxn matrix where each row represents the downstream node
+    and columns represent the flows and fractions.
     """
     n = flows.shape[0]
-    # Compute total outflow from each node
-    outflows = np.array(flows.sum(axis=1)).flatten()
-    outflows[outflows == 0] = 1  # Avoid division by zero
 
-    # Transition matrix: T[i, j] = fraction of i's outflow going to j
-    T = flows.multiply(1 / outflows[:, None])
+    # Create an identity matrix as a sparse matrix
+    identity_matrix = identity(n, format='csr')
 
-    # Fundamental matrix: (I - T)^-1
-    I = identity(n, format='csr')
-    F = spsolve(I - T, I.toarray())  # shape (n, n)
+    # Solve the linear system (I - flow_matrix) * X = I directly
+    flow_fractions = spsolve(identity_matrix - flows, identity_matrix)
 
-    # F[i, j]: fraction of flow at node j that originated from node i
-    F = np.array(F).reshape((n, n))
+    # Calculate the flow magnitudes by multiplying the flow fractions by the original flow matrix
+    flow_magnitudes = flow_fractions @ flows.toarray()
 
-    # Compute total inflow at each node
-    inflows = np.array(flows.sum(axis=0)).flatten()
-
-    # Absolute contributions: for each downstream node j, flow from i = F[i, j] * inflow at j
-    absolute_contributions = F * inflows[None, :]
-
-    # Fractional contributions: for each downstream node j, fraction from i = F[i, j] / sum_k F[k, j]
-    col_sums = absolute_contributions.sum(axis=0)
-    col_sums[col_sums == 0] = 1  # Avoid division by zero
-    fractional_contributions = absolute_contributions / col_sums[None, :]
-
-    return absolute_contributions, fractional_contributions
+    return flow_fractions, flow_magnitudes
 
 
 def flip_edge(g, u, v):
@@ -130,21 +106,15 @@ def swmm_flow_summary(
                 if sum_flow >= 0:
                     u_index = node_attr['index']
                     v_index = network.nodes[v]['index']
-                    # flow_array[u_index, v_index, 0] += max_val
                     flow_array[u_index, v_index] += sum_flow
                 else:
                     edges_to_flip.append((u, v, node_attr, sum_flow))
-                    # save flow values in reverse direction
-                    # u_index = network.nodes[v]['index']
-                    # v_index = node_attr['index']
-                    # flow_array[u_index, v_index, 0] += max_val
-                    # flow_array[u_index, v_index, 1] += abs(sum_flow)
+
 
         for u, v, node_attr, sum_flow in edges_to_flip:
             flip_edge(network, u, v)
             u_index = network.nodes[v]['index']
             v_index = node_attr['index']
-            # flow_array[u_index, v_index, 0] += max_val
             flow_array[u_index, v_index] += abs(sum_flow)
 
     return  flow_array.tocsr()

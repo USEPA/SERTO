@@ -18,8 +18,8 @@ class TestSpatialSWMM(unittest.TestCase):
         Test the loading of a SWMM model
         :return:
         """
-        model = SpatialSWMM.read_model(
-            model_path=EXAMPLE_SWMM_TEST_MODEL_A['filepath'],
+        model = SpatialSWMM(
+            inp_file=EXAMPLE_SWMM_TEST_MODEL_A['filepath'],
             crs=EXAMPLE_SWMM_TEST_MODEL_A['crs']
         )
 
@@ -29,3 +29,5 @@ class TestSpatialSWMM(unittest.TestCase):
                  'SSURGO data.']
 
         self.assertEqual(model.title, title)
+
+    #

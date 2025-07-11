@@ -177,7 +177,7 @@ def main(parser_args: argparse.Namespace, *args, **kwargs):
     :return: None
     """
     if parser_args.analysis_command == 'plumes':
-        PlumeEventMatrix.generate_plumes(**vars(parser_args))
+        PlumeEventMatrix.generate_plumes(*args, {**vars(parser_args), **kwargs})
     else:
         raise ValueError(f"Invalid analysis command: {parser_args.analysis_command}")
 

@@ -1,4 +1,4 @@
-VERSION_INFO = (0, 0, 0, "dev1")
+VERSION_INFO = (0, 0, 0, "a", 1)  # Major, Minor, Patch, Release Type, Release Number
 __version__ = ".".join(map(str, VERSION_INFO))
 __author__ = "Caleb Buahin and Anne Mikelonis"
 __copyright__ = "Copyright (c) 2025"
@@ -33,6 +33,7 @@ def configured_parser() -> argparse.ArgumentParser:
         description='The Stormwater Emergency Response Tool & Optimizer (SERTO)\n'
                     'for emergency response and optimization applications in stormwater systems',
         epilog='Developed by the US EPA Office of Research and Development',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
 
     parser.add_argument(

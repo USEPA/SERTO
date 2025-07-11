@@ -2,6 +2,7 @@
 This module provides the functionality to visualize plumes in SWMM.
 """
 # python imports
+import argparse
 
 # third-party imports
 
@@ -15,11 +16,14 @@ def configure_subparsers(graphics_subparsers: argparse.ArgumentParser):
     :return:
     """
 
-    plume_visualization_parser = graphics_subparsers.add_parser('precipitation', help='Precipitation visualization')
+    plume_visualization_parser = graphics_subparsers.add_parser(
+        'precipitation',
+        help='Precipitation visualization'
+    )
 
 
 def main(*args, **kwargs):
-    """
+    """Main function for the precipitation visualization command.
     """
     pass
 

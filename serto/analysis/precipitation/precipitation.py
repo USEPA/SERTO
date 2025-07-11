@@ -7,6 +7,7 @@ from typing import Union, List, Tuple, Dict
 from datetime import datetime, time
 import json
 import io
+import enum
 
 # third party imports
 
@@ -29,13 +30,20 @@ class PrecipAnalysisData(IDictable):
     This class contains the wind data to be used for wind analysis
     """
 
-    class SamplingApproach:
+    class SamplingApproach(enum.Enum):
         """
         This class defines the
         """
         RANDOM = 0
         GAUSSIAN_MIXTURE = 1
         BAYESIAN_GAUSSIAN_MIXTURE = 2
+
+    class SeriesType(enum.Enum):
+        """
+        This class defines the series type for the precipitation analysis
+        """
+        AMS = 'ams'  # Annual Maximum Series
+        PDS = 'pds'  # Partial Duration Series
 
     def __init__(
             self,
@@ -134,7 +142,7 @@ class PrecipAnalysisData(IDictable):
         else:
             raise ValueError('Invalid sampling approach')
 
-    def to_dict(self, base_directory: str = None) -> dict:
+    def to_dict(self, base_directory: str = None, *args, **kwargs) -> dict:
         """
         Convert the object to a dictionary
         :param base_directory: The base directory for relative paths
@@ -167,7 +175,7 @@ class PrecipAnalysisData(IDictable):
         return data_dict
 
     @classmethod
-    def from_dict(cls, data: dict, base_directory: str = None) -> 'PrecipAnalysisData':
+    def from_dict(cls, data: dict, base_directory: str = None, *args, **kwargs) -> 'PrecipAnalysisData':
         """
         Create an object from a dictionary representation
         :param data: The dictionary
@@ -213,9 +221,11 @@ class PrecipitationAnalysis(IDictable):
         :param latitude:
         :param longitude:
         """
-        pass
+        self._data = PrecipAnalysisData(
+            data=data
+        )
 
-    def to_dict(self, base_directory: str = None) -> dict:
+    def to_dict(self, base_directory: str = None, *args, **kwargs) -> dict:
         """
         Convert the object to a dictionary
         :param base_directory: The base directory for relative paths
@@ -248,7 +258,7 @@ class PrecipitationAnalysis(IDictable):
         return data_dict
 
     @classmethod
-    def from_dict(cls, data: dict, base_directory: str = None) -> 'PrecipAnalysisData':
+    def from_dict(cls, data: dict, base_directory: str = None, *args, **kwargs) -> 'PrecipAnalysisData':
         """
         Create an object from a dictionary representation
         :param data: The dictionary
@@ -263,7 +273,7 @@ class PrecipitationAnalysis(IDictable):
         elif isinstance(ts_data, dict):
             ts_data = pd.DataFrame(ts_data)
 
-        return cls(
+        return PrecipAnalysisData(
             data=ts_data,
             precipitation_col=data['precipitation_col'] if 'precipitation_col' in data else None,
             inter_event_time=data['inter_event_time'] if 'inter_event_time' in data else 24.0,

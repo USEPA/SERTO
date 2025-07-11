@@ -12,7 +12,7 @@ from typing import List, Callable, Any
 
 # local imports
 from .spatialswmm import *
-from ..swmm import SpatialSWMM
+from ...swmm import SpatialSWMM
 
 
 def configure_subparsers(graphics_subparsers: argparse.ArgumentParser):
