@@ -1,0 +1,178 @@
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Banklick_1_1_1_config.yml
+# numrainfall_numwind_numstddev
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# 1/23/2024
+# TODO: * Reorder sections based on importance. Paths will likely never changes,
+#         so they can be moved to the last section.
+#       * Consider adding numerals to each section for ease of reference, i.e.
+#         "refer section 1. Plume Generation and change field ___ to _____"
+#       * For fields that have a set number of options, such as optimization
+#         approach, we should add the options to the comments, i.e.:
+#
+# opt_approach: Outlines the optimization strategy utilized within the Chama
+#               framework (impact or coverage).
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#
+#
+#
+#
+#
+# #############################################################################
+# Chama Optimization Configuration File (YAML).                               #
+# #############################################################################
+# 1. Plume Generation
+# ------------------------------------------------------------------------------
+# standard_deviations:  Specifies the length and width parameters for the plume
+#                       release, influencing its dispersion characteristics.
+# wind_direction_degree:  Represents the 360-degree orientation of the wind,
+#                         indicating the direction in which it blows.
+# contaminant_size_in_picocurie:  Quantifies the amount of contaminant released
+#                                 in picocuries.
+# ------------------------------------------------------------------------------
+standard_deviations:
+  - x: 2500
+    y: 833
+#  - x: 100
+#    y: 200
+wind_direction_degree:
+  - 0
+  - 60
+  - 120
+  - 180
+  - 240
+  - 300
+contaminant_size_in_picocurie: 40000000000000
+
+# ------------------------------------------------------------------------------
+# 2. Network File information
+# ------------------------------------------------------------------------------
+# inp File: The foundational inp file which serves as the basis for generating
+#           all subsequent inp files.
+# start_plume_objects:  Identifies the SWMM objects at which plumes can originate.
+# subcatchments_centers_file: Contains the centroid coordinates (x and y) of
+#                             subcatchments, serving as pollutant release points.
+# rainfall_metadata_file: Specifies the start and end times of the rainfall event.
+# sensor_objects:  Designates locations for sensors to capture relevant data.
+# Rainfall_Hotstart_filenames:  The names of the Rainfall and Hotstart files for
+#                               PySWMM. NOTE that we are currently naming the
+#                               Rainfall and Hotstart files the same.
+# ------------------------------------------------------------------------------
+inp_file: BanklickCreekDownstream_base.inp
+start_plume_objects: Subcatchments
+subcatchments_centers_file: subcatchments-centers-from-xy_only.csv
+rainfall_metadata_file: cvg_event_data.csv
+sensor_objects:
+  - Outfalls
+  - Junctions
+  - Dividers
+  - Storage
+Rainfall_Hotstart_filenames:
+  - 2005Jan02T22
+  - 2008Dec09T12
+  - 2009Mar31T10
+  - 2010Nov29T21
+  - 2011Aug07T05
+  - 2013Jul01T16
+  - 2015Apr16T12
+  - 2015Sep11T06
+  - 2016Sep13T12
+  - 2018Jun25T09
+  - 2019Jul21T23
+  - 2020Sep14T10
+  - 2021Jan01T05
+  - 2021Oct23T20
+  - 2023Jul27T21
+
+
+# ------------------------------------------------------------------------------
+# Paths:  List of local input and output paths for the simulation. These
+#         generally will not change.
+# ------------------------------------------------------------------------------
+# input:  Location of the static ensemble inputs.
+# inp_output: Location where generated inp files are written.
+# rainfall_hotstart_input:  Location of the static rainfall and hotstart files.
+# signal_output:  Location of the generated signal files.
+# database_dir: Location of the SQLite Database.
+# output_dir: Location where the chamaoptimizer output files are generated.
+# ------------------------------------------------------------------------------
+paths:
+  ensemble_runs: "ensemble_runs"
+  input: "."
+  inp_output: "inp_files_out"
+  rainfall_hotstart_input: "Rainfall_Hotstart_files"
+  signal_output: "signal_files_out"
+  database_dir: "database"
+  output_dir: "chama_out"
+
+# ------------------------------------------------------------------------------
+# INP file information
+# ------------------------------------------------------------------------------
+# pollutant:  Specifies the nature or category of the pollutant under
+#             consideration.
+# reporting_time_in_min:  SWMM reports data at regular intervals, with a
+#                         frequency in minutes.
+# sim_timestep_window_in_sec: Defines the simulation timestep, with a frequency
+#                             in seconds.
+# multi_inp_files:  Specifies whether the process involves multiple signals or a
+#                   single signal file.
+# swmm_start_time:  Indicates the specific time at which the simulation began.
+# reporting_time: Specifies the time intervals at which SWMM generates reports
+#                 during a simulation.
+# ------------------------------------------------------------------------------
+pollutant: "Cesium"
+reporting_time_in_min: 5
+sim_timestep_window_in_sec: 5
+multi_inp_files:
+  enabled: True
+num_threads_per_simulation: 4
+swmm_start_time: 1493443800
+reporting_time: 300
+
+# ------------------------------------------------------------------------------
+# Chama Optimization
+# ------------------------------------------------------------------------------
+# model_name: Identifies the specific model name associated with a network.
+# time_step:  Specifies the timestep used in the Chama model for computations
+#             and analyses.
+# start_step: Indicates the starting point of the Chama run.
+# end_step: Specifies the last step for the Chama run, defining the
+#           duration of the simulation.
+# detector_threshold: Establishes the minimum pollutant concentration required
+#                     for successful detection.
+# sensor_budget:  Quantifies the number of sensors available for monitoring
+#                 within the Chama model.
+# formulation:  Describes the formulation method employed in the Chama model for
+#               pollutant analysis.
+# opt_approach: Outlines the optimization strategy utilized within the Chama
+#               framework.
+# undetected_impact:  This parameter reflects the penalty associated with
+#                     failing to detect pollutants.
+# ------------------------------------------------------------------------------
+model_name: "Banklick"
+raingage_name: "CVG"
+hotstart: TRUE
+time_step: 1
+start_step: 0
+end_step: 10000
+detector_threshold: 2
+sensor_budget: 3
+formulation: "coverage"
+opt_approach: "scenario-time"
+undetected_impact: 2678400
+
+# ------------------------------------------------------------------------------
+# 6. Flags
+# ------------------------------------------------------------------------------
+# single_out_rpt_files: This flag controls whether the code deletes the output and report
+# files generated by the pyswmm module after execution.
+# single_signal_files: This flag probably determines whether the code deletes signal
+# files associated with each pyswmm run.
+# entity_assessment_flag: A flag in the code that logs the entity assessment from the chamaoptimizer coverage formulation.
+# sensor_assessment_flag: A flag in the code that logs the sensor assessment from the chamaoptimizer coverage formulation.
+# ------------------------------------------------------------------------------
+
+single_out_rpt_files: True
+single_signal_files: True
+entity_assessment_flag: False
+sensor_assessment_flag: False
