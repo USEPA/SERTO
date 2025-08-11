@@ -31,9 +31,9 @@ build-backend = "setuptools.build_meta"
 name = "serto"
 dynamic = ["version"]
 description = "A Python package for optimizing SWMM models for infastructure design, operational control, and emergency response applications"
-readme = {file = "README.md", content-type = "text/markdown"}
+readme = {file = "docs\\README.rst", content-type = "text/restructuredtext"}
 license = {file = "LICENSE"}
-keywords = ["SWMM", "optimization", "water", "stormwater", "modeling"]
+keywords = ["SWMM", "optimization", "water", "stormwater", "modeling", "hydrology", "hydraulics", "wastewater", "infrastructure", "design", "control", "emergency", "response"]
 requires-python = ">=3.8"
 
 authors = [
@@ -49,7 +49,7 @@ maintainers = [
 dependencies = [
     "pandas>=2.2.2",
     "pyyaml>=6.0.1",
-    "pyswmm>=2.0.1",
+    "epaswmm",
     "mpi4py>=3.1.6",
     "shapely>=2.0.5",
     "fiona>=1.9.6",
@@ -95,5 +95,5 @@ packages = ['serto']
 package-data = {"" = ["pyproject.toml"]}
 
 [project.scripts]
-swmmoptimizer = "serto.cli:main"
+serto = "serto:main"
 

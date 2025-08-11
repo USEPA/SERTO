@@ -1,10 +1,11 @@
+name: Build and Deploy
 on:
   push:
     tags:
       - v*
 jobs:
   build:
-    name: Build Test Deploy
+    name: Build Test Release
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -18,6 +19,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # Download and install MS-MPI for windows
+      - name: Install MS-MPI
+        if: matrix.os == 'windows-latest'
+        run: |
+          curl -L -o msmpisetup.exe https://github.com/microsoft/Microsoft-MPI/releases/download/v10.1.1/msmpisetup.exe
+          .\msmpisetup.exe -s
 
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v5

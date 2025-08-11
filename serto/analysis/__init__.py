@@ -1,99 +1,56 @@
+"""
+The serto.analysis module provides the functionality for various analysis tasks.
+"""
+
 # python imports
 import argparse
-import pandas as pd
 
 # third party imports
 
 # local imports
+from . import plumes
+from . import precipitation
+from . import wind
+from . import flow
 
+from ..defaults import SERTODefaults
 
-def get_description():
-    return 'Run the CHAMA optimization'
-
-
-def configure_subparser(sub_parser: argparse.ArgumentParser):
+def configure_subparsers(sub_parsers: argparse._SubParsersAction):
     """
-    Configure the subparser for the chamaoptimizer command.
-    :param sub_parser:
+    Configure the subparser for the analysis command.
+    :param sub_parsers: (argparse._SubParsersAction) The subparsers for the analysis command.
     :return:
     """
-    parser = sub_parser.add_parser(
-        'wind',
-        help='Run wind speed and direction analysis'
+    analysis_parser = sub_parsers.add_parser('analysis', help='Perform specific analysis tasks')
+    analysis_subparsers = analysis_parser.add_subparsers(
+        title='analysis',
+        description='Analysis tasks to execute',
+        help='Additional help',
+        dest='analysis_command'
     )
 
-    sub_parsers = sub_parser.add_subparsers(
-        title='wind',
-        description='Wind speed and direction analysis commands to execute',
-        help='Additional help'
-    )
-
-    # Sample
-    sample_parser = sub_parsers.add_parser(
-        'sample',
-        help='Sample wind speed and direction data'
-    )
-
-    sample_parser.add_argument(
-        '-f',
-        '--csv-file',
-        help='Wind speed and direction file',
-        required=True,
-        action='store'
-    )
-
-    sample_parser.add_argument(
-        '-d',
-        '--dir',
-        help='Wind direction column name',
-        required=True,
-        action='store',
-        default='drct',
-    )
-
-    sample_parser.add_argument(
-        '-s',
-        '--speed',
-        help='Wind speed column name',
-        required=True,
-        action='store',
-        default='sknt',
-    )
-
-    sample_parser.add_argument(
-        '--dbins',
-        help='Num wind direction bins',
-        required=True,
-        action='store',
-        default='sknt',
-    )
-
-    # Plot wind rose
-
-    # Plot Quiver
+    flow.configure_subparsers(analysis_subparsers)
+    plumes.configure_subparsers(analysis_subparsers)
+    precipitation.configure_subparsers(analysis_subparsers)
+    wind.configure_subparsers(analysis_subparsers)
 
 
-def sample(data: pd.DataFrame, dir: str, speed: str, dbins: int, *args, **kwargs):
+@SERTODefaults.extra_args()
+def main(parser_args: argparse.Namespace, *args, **kwargs):
     """
-    Sample the wind speed and direction data
-    :param data:
-    :param dir:
-    :param speed:
-    :param dbins:
-    :param args:
-    :param kwargs:
-    :return:
+    Main function for the analysis commands.
+    :param parser_args: (argparse.Namespace) An object containing the parsed arguments
+    from the command line interface (CLI)
+    :param args: Additional arguments to pass to the main function for the analysis command (if any)
+    :param kwargs: Additional keyword arguments to pass to the main function for the analysis command (if any)
     """
-    return GaussianPlume(data, dir, speed, dbins)
-
-def process_args(data: pd.DataFrame, dir: str, speed: str,  *args, **kwargs):
-    """
-    Process the arguments for the chamaoptimizer command.
-    :param data:
-    :param dir:
-    :param speed:
-    :param args:
-    :param kwargs:
-    :return:
-    """
-    return args
+    if parser_args.analysis_command == 'plumes':
+        plumes.main(parser_args, *args, **kwargs)
+    elif parser_args.analysis_command == 'precip':
+        precipitation.main(parser_args, *args, **kwargs)
+    elif parser_args.analysis_command == 'wind':
+        wind.main(parser_args,*args, **kwargs)
+    elif parser_args.analysis_command == 'flow':
+        flow.main(parser_args, *args, **kwargs)
+    else:
+        raise ValueError(f"Invalid analysis command: {parser_args.analysis_command}")

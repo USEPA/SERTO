@@ -1,0 +1,38 @@
+swmm_input_file: "swmm_input_file1.inp"
+crs: "EPSG:3089"
+contaminant_loading_spatial_resolution: 100
+contaminant_name: "Cesium"
+contaminant_unit: "Curies" # Convert to units per unit area / Convert to picocuries for simulation
+plume_type: EMPIRICAL
+event_matrix:
+    contaminant_amounts: [266.0,],
+    wind_configurations:
+        wind_directions: [0, 45, 90, 135, 180, 225, 270]
+        wind_speeds: [1.0, 2.0, 3.0]
+        wind_scenarios: "wind_scenarios.yml"
+    turbulent_intensities: [0.0, 0.0, 0.0] # For physics formulation
+    standard_deviations: # For empirical formulation
+        - [10, 10]
+        - [20, 20]
+        - [30, 30]
+    release_locations:
+        element_types:
+            - SUBCATCHMENTS
+            - JUNCTIONS
+            - OUTFALLS
+            - STORAGES
+            - DIVIDERS
+        specified_locations:
+            - location:
+                name: "Subcatchment 1"
+                x: 0
+                y: 0
+            - location:
+                name: "Junction 1"
+                x: 0
+                y: 0
+        grid:
+            x_resolution: 500
+            y_resolution: 500
+
+

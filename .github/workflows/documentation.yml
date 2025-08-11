@@ -1,38 +1,69 @@
+name: Build Documentation
 on:
   push:
     branches:
+      - main
+      - dev
   pull_request:
     branches:
       - main
       - dev
+      - docs
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
-  build:
-    name: Build Test Deploy
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
-        python: ["3.9", "3.10", "3.11", "3.12"]
-        include:
-          - os: windows-latest
-          - os: ubuntu-latest
-          - os: macos-latest
+  build_docs:
+    name: Build and Deploy Documentation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Install OpenMPI and MPICH for Ubuntu
+      - name: Install OpenMPI
+        run: |
+          sudo apt-get install -y openmpi-bin libopenmpi-dev
+
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python }}
+          python-version: '3.9'
 
       - name: Install dependencies
         run: |
             python -m pip install --upgrade pip
             python -m pip install -r requirements.txt
 
-      - name: Install package and run tests
+      - name: Install package
         run: |
           python -m pip install -e .
-          pytest
+
+      - name: Build documentation
+        run: |
+          python -m pip install -r docs/requirements.txt
+          python -m sphinx -b html docs docs/_build/html
+
+      - name : Upload documentation
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/_build/html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Deploy Docs
+        id: deployment
+        uses: actions/deploy-pages@v4
