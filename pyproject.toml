@@ -92,11 +92,8 @@ classifiers = [
 [tool.setuptools]
 include-package-data = true
 packages = ['serto']
-
-[tool.setuptools.package-data]
-pyproject = ["pyproject.toml"]
+package-data = {"" = ["pyproject.toml"]}
 
 [project.scripts]
 serto = "serto:main"
 
-# Removed invalid [options.entry_points] section

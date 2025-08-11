@@ -3,10 +3,10 @@ message: "If you use this software, please cite it as below."
 authors:
 - family-names: "Buahin"
   given-names: "Caleb"
-  orcid: "https://orcid.org/0000-0002-6250-2220"
+  orcid: "https://orcid.org/0000-0002-9859-2264"
 - family-names: "Mikelonis"
   given-names: "Anne"
-  orcid: "https://orcid.org/0000-0003-1410-2756"
+  orcid: "https://orcid.org/0000-0002-0835-5530"
 title: "A python package for optimizing infrastructure sizing and placement, operation, and for emergency response applications in stormwater systems"
 version: 0.0.0.dev1
 doi: "Not Provisioned Yet"
